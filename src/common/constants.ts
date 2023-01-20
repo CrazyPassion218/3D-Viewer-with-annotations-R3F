@@ -1,5 +1,5 @@
 import * as Three from "three";
-import { DEFAULT_ANNOTATION_COLOR } from "./colors";
+import { /*DEFAULT_ANNOTATION_COLOR, */POINT_ANNOTATION_COLOR } from "./colors";
 
 export const INITIAL_CAMERA_SETTINGS = {
     fov: 70,
@@ -17,6 +17,6 @@ export const LIGHT_POSITION = new Three.Vector3(5, 10, 2);
 export const SPHERE_GEOMETRY = new Three.SphereGeometry(0.15);
 
 export const MESH_MATERIAL = new Three.MeshLambertMaterial({
-    emissive: new Three.Color(DEFAULT_ANNOTATION_COLOR),
+    emissive: new Three.Color(POINT_ANNOTATION_COLOR),
     emissiveIntensity: 0.25,
 });
