@@ -4,6 +4,7 @@ import { findTween, getTween } from "../utils/tweenUtils";
 
 export const SCENE_BACKGROUND_COLOR = "#ccc";
 export const DEFAULT_ANNOTATION_COLOR = "#fff";
+export const POINT_ANNOTATION_COLOR = "#f00";
 
 const HEATMAP_COLORS = [
     [0.0, createColor("#dcdcdc")],
