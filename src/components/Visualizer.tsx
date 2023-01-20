@@ -353,8 +353,6 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
 
 // Just renders a sphere
 function renderPoint(annotationLocation: SimpleVectorWithNormal): JSX.Element {
-    console.log(convertToThreeJSVector(annotationLocation));
-
     return (
         <mesh
             geometry={SPHERE_GEOMETRY}
