@@ -65,6 +65,12 @@ interface VisualizerProps {
     onClick: (wasClickIgnored: boolean) => void;
 
     /**
+     * Called when a model is clicked.
+     * @param annotation
+     */
+    insertAnnotation: (annotation: Annotation) => void;
+
+    /**
      * Called when a right click is registered.
      * @param worldPositionAndNormal
      * @param screenPosition
@@ -89,6 +95,7 @@ export function Visualizer({
     onReady,
     onClick,
     onRightClick,
+    insertAnnotation
 }: VisualizerProps) {
     const [state, setState] = React.useState<VisualizerState>();
     // TODO use `layerDepth` to show the various layers of an object
@@ -150,9 +157,23 @@ export function Visualizer({
 
     const handleClick = React.useCallback(
         (ev: React.MouseEvent) => {
-            const context = getClickContext(ev);
+            const clickContext = getClickContext(ev);
 
-            console.log(context);
+            if (disableInteractions || clickContext === undefined || clickContext.intersections.length === 0) {
+                return;
+            }
+
+            const { intersections/*, camera, renderer*/ } = clickContext;
+
+            insertAnnotation({
+                type: "point",
+                location: {
+                    x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
+                } as SimpleVectorWithNormal,
+                data: {
+                    type: 'basic'
+                }
+            } as PointAnnotation);
 
             onClick(disableInteractions);
     }, [getClickContext, disableInteractions, onClick]);
@@ -323,7 +344,7 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
             const colorsAttribute = new Three.BufferAttribute(colorList, 3);
             mesh.geometry.setAttribute("color", colorsAttribute);
             mesh.geometry.attributes.color.needsUpdate = true;
-
+            console.log(annotation);
             return renderPoint(annotation.location);
         },
         unknown: () => undefined,
@@ -332,6 +353,8 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
 
 // Just renders a sphere
 function renderPoint(annotationLocation: SimpleVectorWithNormal): JSX.Element {
+    console.log(convertToThreeJSVector(annotationLocation));
+
     return (
         <mesh
             geometry={SPHERE_GEOMETRY}
