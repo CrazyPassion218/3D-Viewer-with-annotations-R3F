@@ -31,6 +31,8 @@ import {
     MESH_MATERIAL,
 } from "common/constants";
 
+import { AnnotationBuffer } from "user-types/annotationBuffer";
+
 interface VisualizerProps {
     /**
      * Determines whether the canvas should be interactive. If set to `true`, you should not be able to move the camera
@@ -45,7 +47,7 @@ interface VisualizerProps {
     /**
      * The list of annotations for the given model.
      */
-    annotations: Annotation[];
+    annotationBuffers: AnnotationBuffer[];
 
     /**
      * Some models can have multiple layers that can be shown. This is a number ranging from 0-1 that indicates what the selected
@@ -71,7 +73,7 @@ interface VisualizerProps {
      * Called when a model is clicked.
      * @param annotation
      */
-    insertAnnotation: (annotation: Annotation) => void;
+    setAnnotation: (annotation: Annotation) => void;
 
     /**
      * Called when a right click is registered.
@@ -93,13 +95,13 @@ interface VisualizerState {
 export function Visualizer({
     disableInteractions = false,
     model,
-    annotations,
+    annotationBuffers,
     annotationType,
    // layerDepth,
     onReady,
     onClick,
     onRightClick,
-    insertAnnotation
+    setAnnotation
 }: VisualizerProps) {
     const [state, setState] = React.useState<VisualizerState>();
     // TODO use `layerDepth` to show the various layers of an object
@@ -170,9 +172,8 @@ export function Visualizer({
 
             const { intersections/*, camera, renderer*/ } = clickContext;
             switch (annotationType) {
-                case 'Point':
-                    console.log('point');
-                    insertAnnotation({
+                case 'point':
+                    setAnnotation({
                         type: "point",
                         location: {
                             x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
@@ -182,9 +183,8 @@ export function Visualizer({
                         }
                     } as PointAnnotation);
                     break;
-                case 'Area':
-                    console.log('area');
-                    insertAnnotation({
+                case 'area':
+                    setAnnotation({
                         type: "area",
                         center: {
                             x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
@@ -201,8 +201,6 @@ export function Visualizer({
                 default:
                     break;
             }
-
-            
 
             onClick(disableInteractions);
     }, [getClickContext, disableInteractions, onClick]);
@@ -226,7 +224,7 @@ export function Visualizer({
         },
         [disableInteractions, getClickContext, onRightClick]
     );
-
+    console.log(annotationBuffers);
     return (
         <Canvas
             onClick={handleClick}
@@ -256,8 +254,8 @@ export function Visualizer({
                 target={modelBoundingBoxCenter}
             />
             <primitive object={model} />
-            {annotations.map((annotation) =>
-                visitAnnotation(annotation, {
+            {annotationBuffers.map((annotationBuffer) =>
+                visitAnnotation(annotationBuffer.annotation, {
                     area: (a) => renderAreaAnnotation(a, model),
                     group: (a) => <>{renderGroupAnnotation(a, model)}</>, // not sure if this is a good way to do things
                     point: (a) => renderPointAnnotation(a, model),

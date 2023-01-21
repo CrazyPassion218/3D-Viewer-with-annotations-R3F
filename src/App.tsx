@@ -1,56 +1,89 @@
 import React from "react";
 import './App.css';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
-// import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import { useLoader } from '@react-three/fiber'
-// import { useGLTF } from "@react-three/drei";
+import { AnnotationBuffer } from "user-types/annotationBuffer";
 import { Visualizer } from './viewer'
-import { AnnotatoinController } from './components/AnnotationControl'
+import { ViewerControl } from './components/ViewerControl'
 import { Annotation } from "@external-lib";
 
 function App() {
-    const [annotations, setAnnotations] = React.useState([] as Annotation[]);
-    const [annotationType, setAnnotationType] = React.useState('point');
-    const [isChecked, setIsChecked] = React.useState(false);
-    const obj = useLoader(OBJLoader, 'human-again.obj')
+    const [annotationBuffers, setAnnotationBuffers] = React.useState([] as AnnotationBuffer[]);
+    const [annotation, setAnnotation] = React.useState({} as Annotation);
+    const [annotationType, setAnnotationType] = React.useState('point' as String);
+    const [controlStatus, setControlStatus] = React.useState('normal' as String);
+
+    const obj = useLoader(OBJLoader, 'human_model.obj')
 
     const insertAnnotation = React.useCallback(
-    (a: Annotation) => {
-        setAnnotations([...annotations, a])
-    }, [annotations]);
+        (title: String, description: String) => {
+            if (!annotation) {
+                alert('Please select point annotation!');
+                return;
+            }
 
-    const changeAnnotationType = React.useCallback(
+            var date = new Date();
+            const a = {
+                id: date.valueOf(),
+                title: title + 'title',
+                description: description + 'description',
+                annotationType: annotationType,
+                annotation: annotation,
+            }
+
+            setAnnotationBuffers([...annotationBuffers, a])
+            setControlStatus('normal');
+        }, [annotationBuffers]);
+
+    const removeAnnotation = React.useCallback(
+        (id: Number) => {
+            let _annotations = [...annotationBuffers];
+            _annotations.map(a => a.id !== id);
+            setAnnotationBuffers(_annotations);
+        }, [annotationBuffers]);
+
+    const updateAnnotation = React.useCallback(
+        (id: Number, a: AnnotationBuffer) => {
+            let _annotations = [...annotationBuffers];
+            _annotations.map(_a => {
+                return (_a.id === id) ? a : _a;
+            });
+            setAnnotationBuffers(_annotations);
+        }, [annotationBuffers]);
+
+    const updateAnnotationType = React.useCallback(
     (event: React.FormEvent) => {
-        // setAnnotationType(event.target.)
         let type = ((event.target) as any).value;
-        setAnnotationType(type);
+        setAnnotationType(type)
     }, [annotationType]);
 
-    const addChecked = React.useCallback(
-        (event: React.FormEvent) => {
-            // setAnnotationType(event.target.)
-            let check = ((event.target) as any).value;
-            console.log(check);
-            setIsChecked(check);
-        }, [isChecked]);
+    const updateControlStatus = React.useCallback(
+        (s: String) => {
+            setControlStatus(s)
+        }, [controlStatus]);
 
     return (
         <div style={{'height': '100%'}}>
-        <AnnotatoinController
-            addChecked = {addChecked}
-            changeAnnotationType = {changeAnnotationType}
-        />
-        <Visualizer
-            disableInteractions={false}
-            model = {obj}
-            annotations = {annotations}
-            layerDepth = {1}
-            annotationType = {annotationType}
-            onReady = {() => {}}
-            onClick = {()=>{}}
-            onRightClick = {() =>{}}
-            insertAnnotation = {insertAnnotation}
-        />
+            <ViewerControl
+                insertAnnotation = {insertAnnotation}
+                updateAnnotation = {updateAnnotation}
+                removeAnnotation = {removeAnnotation}
+                updateAnnotationType = {updateAnnotationType}
+                updateControlStatus = {updateControlStatus}
+                annotationBuffers = {annotationBuffers}
+                controlStatus = {controlStatus}
+            />
+            <Visualizer
+                disableInteractions={false}
+                model = {obj}
+                annotationBuffers = {annotationBuffers}
+                layerDepth = {1}
+                annotationType = {annotationType}
+                onReady = {() => {}}
+                onClick = {()=>{}}
+                onRightClick = {() =>{}}
+                setAnnotation = {setAnnotation}
+            />
         </div>
     );
 }
