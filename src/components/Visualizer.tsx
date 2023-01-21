@@ -52,7 +52,10 @@ interface VisualizerProps {
      * zoom level is. Different models will interpret this value in different ways, so for now we can temporarily skip implementing it.
      */
     layerDepth: number;
-
+    /**
+     * Various types of annotations.
+     */
+    annotationType:String
     /**
      * Called when the canvas is ready.
      */
@@ -91,6 +94,7 @@ export function Visualizer({
     disableInteractions = false,
     model,
     annotations,
+    annotationType,
    // layerDepth,
     onReady,
     onClick,
@@ -132,8 +136,7 @@ export function Visualizer({
 
     const handleCanvasCreated = React.useCallback(
         (rootState: RootState) => {
-            rootState.scene.background = new Three.Color(SCENE_BACKGROUND_COLOR);
-
+            rootState.scene.background = new Three.Color(SCENE_BACKGROUND_COLOR); 
             // set the camera to frame the model into view
             frameArea(
                 modelBoundingBoxSize * 1.2,
@@ -150,7 +153,9 @@ export function Visualizer({
                 raycaster: rootState.raycaster,
             });
 
-            onReady();
+            onReady(
+                
+            );
         },
         [model, modelBoundingBoxCenter, modelBoundingBoxSize, onReady]
     );
@@ -158,22 +163,46 @@ export function Visualizer({
     const handleClick = React.useCallback(
         (ev: React.MouseEvent) => {
             const clickContext = getClickContext(ev);
-
+            // console.log(model.children[0].geometry); 
             if (disableInteractions || clickContext === undefined || clickContext.intersections.length === 0) {
                 return;
             }
 
             const { intersections/*, camera, renderer*/ } = clickContext;
+            switch (annotationType) {
+                case 'Point':
+                    console.log('point');
+                    insertAnnotation({
+                        type: "point",
+                        location: {
+                            x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
+                        } as SimpleVectorWithNormal,
+                        data: {
+                            type: 'basic'
+                        }
+                    } as PointAnnotation);
+                    break;
+                case 'Area':
+                    console.log('area');
+                    insertAnnotation({
+                        type: "area",
+                        center: {
+                            x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
+                        } as SimpleVectorWithNormal,
+                        radius: 20,
+                        data: {
+                            type: 'basic'
+                        }
+                    } as AreaAnnotation);
+                    break;
+                case 'Group':
+                    console.log('group');
+                    break;
+                default:
+                    break;
+            }
 
-            insertAnnotation({
-                type: "point",
-                location: {
-                    x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
-                } as SimpleVectorWithNormal,
-                data: {
-                    type: 'basic'
-                }
-            } as PointAnnotation);
+            
 
             onClick(disableInteractions);
     }, [getClickContext, disableInteractions, onClick]);
@@ -242,33 +271,33 @@ export function Visualizer({
 
 function renderAreaAnnotation(annotation: AreaAnnotation, model: Three.Object3D): JSX.Element | undefined {
     const mesh = model.children.find((c): c is Three.Mesh => c instanceof Three.Mesh);
-
     if (mesh === undefined) {
         return renderPoint(annotation.center);
     }
-
+    
+    if(!mesh.geometry.attributes.color){	    
+        let count = mesh.geometry.attributes.position.count;
+        mesh.geometry.setAttribute( 'color', new Three.BufferAttribute( new Float32Array( count * 3 ), 3 ) );
+    };   
     const colorList = new Float32Array(mesh.geometry.attributes.color.array);
     const geometryPositionsArray = Array.from(mesh.geometry.getAttribute("position").array);
     const vertex = new Three.Vector3();
     const areaCenter = new Three.Vector3(annotation.center.x, annotation.center.y, annotation.center.z);
     const color = new Three.Color(AREA_ANNOTATION_COLOR);
     const rgbValues = [color.r, color.g, color.b];
-
     for (let i = 0; i <= geometryPositionsArray.length - 3; i += 3) {
         vertex.set(geometryPositionsArray[i], geometryPositionsArray[i + 1], geometryPositionsArray[i + 2]);
         const distance = vertex.distanceTo(areaCenter);
-
         // if this vertex is within the radius, color it
         if (distance <= annotation.radius) {
             colorList.set(rgbValues, i);
         }
     }
-
     // note: this will only work for non indexed geometry
     const colorsAttribute = new Three.BufferAttribute(colorList, 3);
     mesh.geometry.setAttribute("color", colorsAttribute);
     mesh.geometry.attributes.color.needsUpdate = true;
-
+    
     return renderPoint(annotation.center);
 }
 
@@ -310,7 +339,6 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
             // here for you to see but feel free to delete it and write a new implementation.
 
             const mesh = model.children.find((c): c is Three.Mesh => c instanceof Three.Mesh);
-
             if (mesh === undefined) {
                 return renderPoint(annotation.location);
             }
@@ -344,7 +372,6 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
             const colorsAttribute = new Three.BufferAttribute(colorList, 3);
             mesh.geometry.setAttribute("color", colorsAttribute);
             mesh.geometry.attributes.color.needsUpdate = true;
-            console.log(annotation);
             return renderPoint(annotation.location);
         },
         unknown: () => undefined,
