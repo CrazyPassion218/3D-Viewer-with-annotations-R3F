@@ -13,60 +13,60 @@ function App() {
     const [annotationType, setAnnotationType] = React.useState('point' as String);
     const [controlStatus, setControlStatus] = React.useState('normal' as String);
 
-    const obj = useLoader(OBJLoader, 'human_model.obj')
+    const obj = useLoader(OBJLoader, 'human_model.obj');
 
-    const selectAnnotation = React.useCallback(
-        (a: Annotation) => {
-            if (controlStatus === 'add')
-                setAnnotation(a);
-        }, [controlStatus]);
+    React.useEffect(() => {
+        if (controlStatus === 'normal')
+            setAnnotation({} as Annotation);
+    }, [controlStatus]);
 
-    const insertAnnotation = React.useCallback(
-        (title: String, description: String) => {
-            if (!annotation.type) {
-                alert('Please select point annotation!');
-                return;
-            }
+    const selectAnnotation = (a: Annotation) => {
+        if (controlStatus === 'add')
+            setAnnotation(a);
+    }
 
-            var date = new Date();
-            const a = {
-                id: date.valueOf(),
-                title: title,
-                description: description,
-                annotationType: annotationType,
-                annotation: annotation,
-            }
+    const insertAnnotation = (title: String, description: String) => {
+        console.log(annotation);
+        if (!annotation.type) {
+            alert('Please select point annotation!');
+            return;
+        }
 
-            setAnnotationBuffers([...annotationBuffers, a])
-            setControlStatus('normal');
-        }, [annotation]);
+        var date = new Date();
+        const a = {
+            id: date.valueOf(),
+            title: title,
+            description: description,
+            annotationType: annotationType,
+            annotation: annotation,
+        }
 
-    const removeAnnotation = React.useCallback(
-        (id: Number) => {
-            let _annotations = [...annotationBuffers];
-            _annotations.map(a => a.id !== id);
-            setAnnotationBuffers(_annotations);
-        }, [annotationBuffers]);
+        setAnnotationBuffers([...annotationBuffers, a])
+        setControlStatus('normal');
+    }
 
-    const updateAnnotation = React.useCallback(
-        (id: Number, a: AnnotationBuffer) => {
-            let _annotations = [...annotationBuffers];
-            _annotations.map(_a => {
-                return (_a.id === id) ? a : _a;
-            });
-            setAnnotationBuffers(_annotations);
-        }, [annotationBuffers]);
+    const removeAnnotation = (id: Number) => {
+        let _annotationBuffers = [...annotationBuffers];
+        setAnnotationBuffers(_annotationBuffers.filter(a => a.id !== id));
+        setControlStatus('normal');
+    }
 
-    const updateAnnotationType = React.useCallback(
-    (event: React.FormEvent) => {
+    const updateAnnotation = (id: Number, a: AnnotationBuffer) => {
+        let _annotations = [...annotationBuffers];
+        _annotations.map(_a => {
+            return (_a.id === id) ? a : _a;
+        });
+        setAnnotationBuffers(_annotations);
+    }
+
+    const updateAnnotationType = (event: React.FormEvent) => {
         let type = ((event.target) as any).value;
         setAnnotationType(type)
-    }, [annotationType]);
+    }
 
-    const updateControlStatus = React.useCallback(
-        (s: String) => {
-            setControlStatus(s)
-        }, [controlStatus]);
+    const updateControlStatus = (s: String) => {
+        setControlStatus(s)
+    }
 
     return (
         <div style={{'height': '100%'}}>
