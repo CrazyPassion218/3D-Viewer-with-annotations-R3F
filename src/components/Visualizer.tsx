@@ -80,6 +80,11 @@ interface VisualizerProps {
      * @returns
      */
     onRightClick: (worldPositionAndNormal: SimpleVectorWithNormal, screenPosition: SimpleVector2) => void;
+
+    /**
+     * selected annotation id in the viewer controller.
+     */
+    selectedAnnotationId: number;
 }
 
 interface VisualizerState {
@@ -99,7 +104,8 @@ export function Visualizer({
     onReady,
     onClick,
     onRightClick,
-    selectAnnotation
+    selectAnnotation,
+    selectedAnnotationId
 }: VisualizerProps) {
     const [state, setState] = React.useState<VisualizerState>();
     // TODO use `layerDepth` to show the various layers of an object
