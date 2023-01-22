@@ -30,6 +30,7 @@ import {
     SPHERE_GEOMETRY,
     MESH_MATERIAL,
 } from "common/constants";
+import { Vector3 } from "three";
 
 interface VisualizerProps {
     /**
@@ -109,12 +110,23 @@ export function Visualizer({
 }: VisualizerProps) {
     const [state, setState] = React.useState<VisualizerState>();
     // TODO use `layerDepth` to show the various layers of an object
-
     // compute the box that contains all the stuff in the model
     const modelBoundingBox = new Three.Box3().setFromObject(model);
     const modelBoundingBoxSize = modelBoundingBox.getSize(new Three.Vector3()).length();
     const modelBoundingBoxCenter = modelBoundingBox.getCenter(new Three.Vector3());
-
+    const focuSelectedAnnotation = React.useEffect(
+        () => {
+            const selectedAnnotation = annotations.filter(function (annotation){
+                return annotation.id === selectedAnnotationId;
+            })
+            if(selectedAnnotation.length !== 0){
+                // console.log(selectedAnnotation[0].location.normal);
+                // state?.camera.lookAt(selectedAnnotation[0].location.x, selectedAnnotation[0].location.y, selectedAnnotation[0].location.z);
+                // state?.camera.position.set(selectedAnnotation[0].location.x + selectedAnnotation[0].location.normal.x * 1, selectedAnnotation[0].location.y + selectedAnnotation[0].location.normal.y * 1, selectedAnnotation[0].location.z + selectedAnnotation[0].location.normal.z * 1);
+                // state?.camera.updateProjectionMatrix();
+            }
+        },[selectedAnnotationId]
+    )
     const getClickContext = React.useCallback(
         (event: React.MouseEvent) => {
             if (state === undefined) {
@@ -397,15 +409,16 @@ function renderPoint(annotationLocation: SimpleVectorWithNormal): JSX.Element {
     );
 }
 
-function renderSprite(children: string, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 45 ):JSX.Element | undefined {
+function renderSprite(children: string, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 120 ):JSX.Element | undefined {
     if (children === undefined) return;
     const fontface = "Georgia"
     const fontsize = fontSize;
     const borderThickness =  4; 
-	var borderColor = {r:0, g:0, b:255, a:1.0};
+	var borderColor = {r:0, g:0, b:0, a:1.0};
     var backgroundColor = {r:10, g:10, b:10, a:1.0};
-    const location = new Three.Vector3(position.x + 1, position.y - 1, position.z + 0.5);
+    const location = new Three.Vector3(position.x , position.y - 0.8, position.z );
     const canvas = document.createElement('canvas');
+    canvas.width += children.length * 30;
     const context = canvas.getContext('2d');
     if(context){
         // context.textBaseline = 'middle'
@@ -420,16 +433,16 @@ function renderSprite(children: string, position: SimpleVectorWithNormal, opacit
                                     + borderColor.b + "," + borderColor.a + ")";
 
         context.lineWidth = borderThickness;
-        roundRect(context, borderThickness/2, borderThickness/2, textWidth * 1.1 + borderThickness, fontsize * 1.4 + borderThickness, 6);
-        context.fillStyle = "rgba(255, 0, 0, 1.0)";
+        roundRect(context, borderThickness/2, borderThickness/2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 6);
+        context.fillStyle = "rgba(255, 255, 255 , 1.0)";
         // context.fillStyle = color
         context.fillText( children, borderThickness, fontsize + borderThickness);
     }
     return (
         <sprite
-            scale={[5, 2, 1]}
+            scale={[3, 1.4, 1]}
             position={location}>
-            <spriteMaterial  transparent alphaTest={opacity}  >
+            <spriteMaterial  transparent alphaTest={opacity} depthTest={false} >
                 <canvasTexture attach="map" image={canvas}/>
             </spriteMaterial>
         </sprite>
