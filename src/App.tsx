@@ -78,7 +78,7 @@ function App() {
                 removeAnnotation = {removeAnnotation}
                 updateAnnotationType = {updateAnnotationType}
                 updateControlStatus = {updateControlStatus}
-                annotations = {annotations.filter(a => a.type === annotationType)}
+                annotations = {annotations.filter(a => (a.type === annotationType && a.title))}
                 controlStatus = {controlStatus}
             />
             <Visualizer
