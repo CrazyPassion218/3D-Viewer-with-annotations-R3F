@@ -79,7 +79,7 @@ export function ViewerControl({
     const handleAddClick = (ev: React.MouseEvent) => {
         ev.preventDefault();
 
-        updateControlStatus("add");
+        updateControlStatus("annotation");
     }
 
     const handleSaveClick = (ev: React.MouseEvent) => {
@@ -163,6 +163,14 @@ export function ViewerControl({
                 controlStatus !== 'normal'? <Button color="primary" variant="contained" disabled> Add </Button> : <Button color="primary" variant="contained" onClick={handleAddClick}> Add </Button>
             }
             {
+                controlStatus === 'annotation' ?
+                    <Grid item xs={12} sm={12} md={12}>
+                        <Typography gutterBottom color="red" fontSize="0.9em">
+                            Please select annotation...
+                        </Typography>
+                    </Grid> : ''
+            }
+            {
                 controlStatus === 'add' ?
                     <Grid item xs={12} sm={12} md={12}>
                         <Paper>
@@ -210,7 +218,7 @@ export function ViewerControl({
                         return (
                             <Card>
                                 <CardContent>
-                                    <Typography gutterBottom variant="h5" component="h2">
+                                    <Typography gutterBottom variant="h5" component="h5">
                                         {a.title}
                                     </Typography>
                                     <Typography variant="body2" color="textSecondary" component="p">
