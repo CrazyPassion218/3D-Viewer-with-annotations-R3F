@@ -13,7 +13,7 @@ import {
     MINIMUM_INTENSITY,
     IntensityValue,
 } from "@external-lib";
-import { Canvas, RootState } from "@react-three/fiber";
+import { Canvas, RootState, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { AREA_ANNOTATION_COLOR, getHeatmapColor, SCENE_BACKGROUND_COLOR } from "../common/colors";
 import { findTween, getTween } from "../utils/tweenUtils";
@@ -136,7 +136,7 @@ export function Visualizer({
 
     const handleCanvasCreated = React.useCallback(
         (rootState: RootState) => {
-            rootState.scene.background = new Three.Color(SCENE_BACKGROUND_COLOR); 
+            rootState.scene.background = new Three.Color(SCENE_BACKGROUND_COLOR);
             // set the camera to frame the model into view
             frameArea(
                 modelBoundingBoxSize * 1.2,
@@ -281,6 +281,7 @@ function renderAreaAnnotation(annotation: AreaAnnotation, model: Three.Object3D)
         let count = mesh.geometry.attributes.position.count;
         mesh.geometry.setAttribute( 'color', new Three.BufferAttribute( new Float32Array( count * 3 ), 3 ) );
     };   
+    console.log(mesh);
     const colorList = new Float32Array(mesh.geometry.attributes.color.array);
     const geometryPositionsArray = Array.from(mesh.geometry.getAttribute("position").array);
     const vertex = new Three.Vector3();
@@ -344,7 +345,6 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
             if (mesh === undefined) {
                 return renderPoint(annotation.location);
             }
-
             const colorList = new Float32Array(mesh.geometry.attributes.color.array);
             const geometryPositionsArray = Array.from(mesh.geometry.getAttribute("position").array);
             const vertex = new Three.Vector3();
@@ -391,33 +391,58 @@ function renderPoint(annotationLocation: SimpleVectorWithNormal): JSX.Element {
     );
 }
 
-function renderSprite(children: string, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 35 ):JSX.Element | undefined {
+function renderSprite(children: string, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 45 ):JSX.Element | undefined {
     if (children === undefined) return;
-
+    const fontface = "Georgia"
     const fontsize = fontSize;
-    const borderThickness =  4;
-    const location = new Three.Vector3(position.x, position.y, position.z);
+    const borderThickness =  4; 
+	var borderColor = {r:0, g:0, b:255, a:1.0};
+    var backgroundColor = {r:10, g:10, b:10, a:1.0};
+    const location = new Three.Vector3(position.x + 1, position.y - 1, position.z + 0.5);
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     if(context){
-        context.textBaseline = 'middle'
-        context.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto, segoe ui, arial, sans-serif`
-
+        // context.textBaseline = 'middle'
+        // context.font = `${fontSize}px -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto, segoe ui, arial, sans-serif`
+        context.font = "Bold " + fontsize + "px " + fontface;
         const metrics = context.measureText( children );
         const textWidth = metrics.width;
+        context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
+								  + backgroundColor.b + "," + backgroundColor.a + ")";
+        // border color
+        context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + ","
+                                    + borderColor.b + "," + borderColor.a + ")";
 
         context.lineWidth = borderThickness;
-
-        context.fillStyle = color
-        context.fillText( children, textWidth - (textWidth*0.8), fontsize);
+        roundRect(context, borderThickness/2, borderThickness/2, textWidth * 1.1 + borderThickness, fontsize * 1.4 + borderThickness, 6);
+        context.fillStyle = "rgba(255, 0, 0, 1.0)";
+        // context.fillStyle = color
+        context.fillText( children, borderThickness, fontsize + borderThickness);
     }
     return (
         <sprite
-            scale={[5, 3, 3]}
+            scale={[5, 2, 1]}
             position={location}>
-            <spriteMaterial attach="material" transparent alphaTest={opacity} >
-                <canvasTexture attach="map" image={canvas} />
+            <spriteMaterial  transparent alphaTest={opacity}  >
+                <canvasTexture attach="map" image={canvas}/>
             </spriteMaterial>
         </sprite>
     )
+}
+
+function roundRect(ctx : CanvasRenderingContext2D, x : any, y : any, w : any, h : any, r : any) 
+{
+    ctx.beginPath();
+    ctx.moveTo(x/2 + r, y/2);
+    ctx.lineTo(x+w-r, y);
+    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r);
+    ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h);
+    ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r);
+    ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.closePath();
+    ctx.fill();
+	ctx.stroke();   
 }
