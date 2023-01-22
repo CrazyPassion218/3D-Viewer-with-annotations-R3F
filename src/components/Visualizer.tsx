@@ -31,8 +31,6 @@ import {
     MESH_MATERIAL,
 } from "common/constants";
 
-import { AnnotationBuffer } from "user-types/annotationBuffer";
-
 interface VisualizerProps {
     /**
      * Determines whether the canvas should be interactive. If set to `true`, you should not be able to move the camera
@@ -47,7 +45,7 @@ interface VisualizerProps {
     /**
      * The list of annotations for the given model.
      */
-    annotationBuffers: AnnotationBuffer[];
+    annotations: Annotation[];
 
     /**
      * Some models can have multiple layers that can be shown. This is a number ranging from 0-1 that indicates what the selected
@@ -57,7 +55,7 @@ interface VisualizerProps {
     /**
      * Various types of annotations.
      */
-    annotationType:String
+    annotationType:string
     /**
      * Called when the canvas is ready.
      */
@@ -95,7 +93,7 @@ interface VisualizerState {
 export function Visualizer({
     disableInteractions = false,
     model,
-    annotationBuffers,
+    annotations,
     annotationType,
    // layerDepth,
     onReady,
@@ -251,11 +249,20 @@ export function Visualizer({
                 target={modelBoundingBoxCenter}
             />
             <primitive object={model} />
-            {annotationBuffers.map((annotationBuffer) =>
-                visitAnnotation(annotationBuffer.annotation, {
+            {annotations.map((annotation) =>
+                visitAnnotation(annotation, {
                     area: (a) => renderAreaAnnotation(a, model),
                     group: (a) => <>{renderGroupAnnotation(a, model)}</>, // not sure if this is a good way to do things
                     point: (a) => renderPointAnnotation(a, model),
+                    path: () => undefined, // Paths are not currently supported, ignore this
+                    unknown: () => undefined,
+                })
+            )}
+            {annotations.map((annotation) =>
+                visitAnnotation(annotation, {
+                    area: (a) => undefined,
+                    group: (a) => undefined, // not sure if this is a good way to do things
+                    point: (a) => renderSprite(a.title, a.location, 1),
                     path: () => undefined, // Paths are not currently supported, ignore this
                     unknown: () => undefined,
                 })
@@ -382,4 +389,33 @@ function renderPoint(annotationLocation: SimpleVectorWithNormal): JSX.Element {
             position={convertToThreeJSVector(annotationLocation)}
         />
     );
+}
+
+function renderSprite(children: string, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 35 ):JSX.Element {
+    const fontsize = fontSize;
+    const borderThickness =  4;
+    const location = new Three.Vector3(position.x, position.y, position.z);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if(context){
+        context.textBaseline = 'middle'
+        context.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto, segoe ui, arial, sans-serif`
+
+        const metrics = context.measureText( children );
+        const textWidth = metrics.width;
+
+        context.lineWidth = borderThickness;
+
+        context.fillStyle = color
+        context.fillText( children, textWidth - (textWidth*0.8), fontsize);
+    }
+    return (
+        <sprite
+            scale={[5, 3, 3]}
+            position={location}>
+            <spriteMaterial attach="material" transparent alphaTest={opacity} >
+                <canvasTexture attach="map" image={canvas} />
+            </spriteMaterial>
+        </sprite>
+    )
 }
