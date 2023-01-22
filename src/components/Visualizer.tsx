@@ -73,7 +73,7 @@ interface VisualizerProps {
      * Called when a model is clicked.
      * @param annotation
      */
-    setAnnotation: (annotation: Annotation) => void;
+    selectAnnotation: (annotation: Annotation) => void;
 
     /**
      * Called when a right click is registered.
@@ -101,7 +101,7 @@ export function Visualizer({
     onReady,
     onClick,
     onRightClick,
-    setAnnotation
+    selectAnnotation
 }: VisualizerProps) {
     const [state, setState] = React.useState<VisualizerState>();
     // TODO use `layerDepth` to show the various layers of an object
@@ -165,7 +165,6 @@ export function Visualizer({
     const handleClick = React.useCallback(
         (ev: React.MouseEvent) => {
             const clickContext = getClickContext(ev);
-            // console.log(model.children[0].geometry); 
             if (disableInteractions || clickContext === undefined || clickContext.intersections.length === 0) {
                 return;
             }
@@ -173,7 +172,7 @@ export function Visualizer({
             const { intersections/*, camera, renderer*/ } = clickContext;
             switch (annotationType) {
                 case 'point':
-                    setAnnotation({
+                    selectAnnotation({
                         type: "point",
                         location: {
                             x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
@@ -184,7 +183,7 @@ export function Visualizer({
                     } as PointAnnotation);
                     break;
                 case 'area':
-                    setAnnotation({
+                    selectAnnotation({
                         type: "area",
                         center: {
                             x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
@@ -196,7 +195,6 @@ export function Visualizer({
                     } as AreaAnnotation);
                     break;
                 case 'Group':
-                    console.log('group');
                     break;
                 default:
                     break;
@@ -224,7 +222,6 @@ export function Visualizer({
         },
         [disableInteractions, getClickContext, onRightClick]
     );
-    console.log(annotationBuffers);
     return (
         <Canvas
             onClick={handleClick}

@@ -15,9 +15,15 @@ function App() {
 
     const obj = useLoader(OBJLoader, 'human_model.obj')
 
+    const selectAnnotation = React.useCallback(
+        (a: Annotation) => {
+            if (controlStatus === 'add')
+                setAnnotation(a);
+        }, [controlStatus]);
+
     const insertAnnotation = React.useCallback(
         (title: String, description: String) => {
-            if (!annotation) {
+            if (!annotation.type) {
                 alert('Please select point annotation!');
                 return;
             }
@@ -25,15 +31,15 @@ function App() {
             var date = new Date();
             const a = {
                 id: date.valueOf(),
-                title: title + 'title',
-                description: description + 'description',
+                title: title,
+                description: description,
                 annotationType: annotationType,
                 annotation: annotation,
             }
 
             setAnnotationBuffers([...annotationBuffers, a])
             setControlStatus('normal');
-        }, [annotationBuffers]);
+        }, [annotation]);
 
     const removeAnnotation = React.useCallback(
         (id: Number) => {
@@ -82,7 +88,7 @@ function App() {
                 onReady = {() => {}}
                 onClick = {()=>{}}
                 onRightClick = {() =>{}}
-                setAnnotation = {setAnnotation}
+                selectAnnotation = {selectAnnotation}
             />
         </div>
     );
