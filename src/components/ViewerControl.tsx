@@ -70,8 +70,12 @@ export function ViewerControl({
         }
     }, [controlStatus]);
 
-    const handleCancelClick = (ev: React.MouseEvent) => {
+    const handleCancelClick = (ev: React.MouseEvent, key: string) => {
         ev.preventDefault();
+
+        if (key === 'add') {
+            removeAnnotation(0);
+        }
 
         updateControlStatus("normal");
     }
@@ -79,7 +83,7 @@ export function ViewerControl({
     const handleAddClick = (ev: React.MouseEvent) => {
         ev.preventDefault();
 
-        updateControlStatus("add");
+        updateControlStatus("annotation");
     }
 
     const handleSaveClick = (ev: React.MouseEvent) => {
@@ -163,6 +167,14 @@ export function ViewerControl({
                 controlStatus !== 'normal'? <Button color="primary" variant="contained" disabled> Add </Button> : <Button color="primary" variant="contained" onClick={handleAddClick}> Add </Button>
             }
             {
+                controlStatus === 'annotation' ?
+                    <Grid item xs={12} sm={12} md={12}>
+                        <Typography gutterBottom color="red" fontSize="0.9em">
+                            Please select annotation...
+                        </Typography>
+                    </Grid> : ''
+            }
+            {
                 controlStatus === 'add' ?
                     <Grid item xs={12} sm={12} md={12}>
                         <Paper>
@@ -176,7 +188,7 @@ export function ViewerControl({
                                 <Button size="small" color="primary" onClick={handleSaveClick}>
                                     Save
                                 </Button>
-                                <Button size="small" color="secondary" onClick={handleCancelClick}>
+                                <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'add')}}>
                                     Cancel
                                 </Button>
                             </Grid>
@@ -199,7 +211,7 @@ export function ViewerControl({
                                         <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleChangeClick(ev, a.id)}}>
                                             Change
                                         </Button>
-                                        <Button size="small" color="secondary" onClick={handleCancelClick}>
+                                        <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'change')}}>
                                             Cancel
                                         </Button>
                                     </Grid>
@@ -210,7 +222,7 @@ export function ViewerControl({
                         return (
                             <Card>
                                 <CardContent>
-                                    <Typography gutterBottom variant="h5" component="h2">
+                                    <Typography gutterBottom variant="h5" component="h5">
                                         {a.title}
                                     </Typography>
                                     <Typography variant="body2" color="textSecondary" component="p">
