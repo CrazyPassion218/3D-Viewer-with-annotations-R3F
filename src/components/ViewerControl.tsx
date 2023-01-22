@@ -5,8 +5,8 @@ import CardContent from "@mui/material/CardContent";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
-import { AnnotationBuffer } from "user-types/annotationBuffer";
 import { Grid, Paper, TextField } from "@mui/material";
+import { Annotation } from "@external-lib";
 
 interface AnnotationControllerProps{
     /**
@@ -19,36 +19,36 @@ interface AnnotationControllerProps{
      * Called when annotation is added.
      * @param a AnnotationBuffer Interface
      */
-    insertAnnotation: (title: String, description: String) => void;
+    insertAnnotation: (title: string, description: string) => void;
 
     /**
      * Called when annotation is removed.
      * @param id AnnotationBuffer id String
      */
-    removeAnnotation: (id: Number) => void;
+    removeAnnotation: (id: number) => void;
 
     /**
      * Called when annotation is updated.
      * @param id AnnotationBuffer id String
      * @param a AnnotationBuffer Interface
      */
-    updateAnnotation: (id: Number, a: AnnotationBuffer) => void;
+    updateAnnotation: (id: number, a: Annotation) => void;
 
     /**
      * Called when current control view status is changed.
      * @param s String
      */
-    updateControlStatus: (s: String) => void;
+    updateControlStatus: (s: string) => void;
 
     /**
      * The list of annotations buffers for the given model.
      */
-    annotationBuffers: AnnotationBuffer[];
+    annotations: Annotation[];
 
     /**
      * current control view status
      */
-    controlStatus: String;
+    controlStatus: string;
 }
 
 export function ViewerControl({
@@ -57,11 +57,11 @@ export function ViewerControl({
     updateAnnotation,
     removeAnnotation,
     updateControlStatus,
-    annotationBuffers,
+    annotations,
     controlStatus
 }: AnnotationControllerProps) {
-    const [title, setTitle] = React.useState('' as String);
-    const [description, setDescription] = React.useState('' as String);
+    const [title, setTitle] = React.useState('' as string);
+    const [description, setDescription] = React.useState('' as string);
 
     React.useEffect(() => {
         if (controlStatus === 'normal') {
@@ -96,7 +96,7 @@ export function ViewerControl({
         insertAnnotation(title, description);
     }
 
-    const handleChangeClick = (ev: React.MouseEvent, id: Number) => {
+    const handleChangeClick = (ev: React.MouseEvent, id: number) => {
         ev.preventDefault();
 
         if (!title) {
@@ -107,25 +107,24 @@ export function ViewerControl({
             return;
         }
 
-        const a = annotationBuffers.filter(a => a.id === id);
+        const a = annotations.filter(a => a.id === id);
         let _a = a[0];
         _a.title = title;
         _a.description = description;
 
         updateAnnotation(id, _a);
-        updateControlStatus('normal');
     }
 
-    const handleDeleteClick = (ev: React.MouseEvent, id: Number) => {
+    const handleDeleteClick = (ev: React.MouseEvent, id: number) => {
         ev.preventDefault();
 
         removeAnnotation(id);
     }
 
-    const handleEditClick = (ev: React.MouseEvent, id: Number) => {
+    const handleEditClick = (ev: React.MouseEvent, id: number) => {
         ev.preventDefault();
 
-        const a = annotationBuffers.filter(a => a.id === id);
+        const a = annotations.filter(a => a.id === id);
         setTitle(a[0].title);
         setDescription(a[0].description);
         updateControlStatus('edit' + id);
@@ -185,7 +184,7 @@ export function ViewerControl({
                     </Grid> : ''
             }
             {
-                annotationBuffers.map(a => {
+                annotations.map(a => {
                     if (controlStatus === ('edit' + a.id)) {
                         return (
                             <Grid item xs={12} sm={12} md={12}>

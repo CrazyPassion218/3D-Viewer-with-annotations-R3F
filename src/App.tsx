@@ -2,61 +2,57 @@ import React from "react";
 import './App.css';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { useLoader } from '@react-three/fiber'
-import { AnnotationBuffer } from "user-types/annotationBuffer";
 import { Visualizer } from './viewer'
 import { ViewerControl } from './components/ViewerControl'
 import { Annotation } from "@external-lib";
 
 function App() {
-    const [annotationBuffers, setAnnotationBuffers] = React.useState([] as AnnotationBuffer[]);
-    const [annotation, setAnnotation] = React.useState({} as Annotation);
-    const [annotationType, setAnnotationType] = React.useState('point' as String);
-    const [controlStatus, setControlStatus] = React.useState('normal' as String);
+    const [annotations, setAnnotations] = React.useState([] as Annotation[]);
+    const [currentAnnotation, setCurrentAnnotation] = React.useState({} as Annotation);
+    const [annotationType, setAnnotationType] = React.useState('point' as string);
+    const [controlStatus, setControlStatus] = React.useState('normal' as string);
 
     const obj = useLoader(OBJLoader, 'human_model.obj');
 
     React.useEffect(() => {
         if (controlStatus === 'normal')
-            setAnnotation({} as Annotation);
+            setCurrentAnnotation({} as Annotation);
     }, [controlStatus, annotationType]);
 
     const selectAnnotation = (a: Annotation) => {
         if (controlStatus === 'add')
-            setAnnotation(a);
+            setCurrentAnnotation(a);
     }
 
-    const insertAnnotation = (title: String, description: String) => {
-        console.log(annotation);
-        if (!annotation.type) {
+    const insertAnnotation = (title: string, description: string) => {
+        if (!currentAnnotation.type) {
             alert('Please select point annotation!');
             return;
         }
+        let annotation = currentAnnotation;
 
-        var date = new Date();
-        const a = {
-            id: date.valueOf(),
-            title: title,
-            description: description,
-            annotationType: annotationType,
-            annotation: annotation,
-        }
+        const date = new Date();
+        annotation.id = date.valueOf();
+        annotation.title = title;
+        annotation.description = description;
 
-        setAnnotationBuffers([...annotationBuffers, a])
+        setAnnotations([...annotations, annotation])
         setControlStatus('normal');
     }
 
-    const removeAnnotation = (id: Number) => {
-        let _annotationBuffers = [...annotationBuffers];
-        setAnnotationBuffers(_annotationBuffers.filter(a => a.id !== id));
+    const removeAnnotation = (id: number) => {
+        let _annotations = [...annotations];
+        setAnnotations(_annotations.filter(a => a.id !== id));
         setControlStatus('normal');
     }
 
-    const updateAnnotation = (id: Number, a: AnnotationBuffer) => {
-        let _annotations = [...annotationBuffers];
+    const updateAnnotation = (id: number, a: Annotation) => {
+        let _annotations = [...annotations];
         _annotations.map(_a => {
             return (_a.id === id) ? a : _a;
         });
-        setAnnotationBuffers(_annotations);
+        setAnnotations(_annotations);
+        setControlStatus('normal');
     }
 
     const updateAnnotationType = (event: React.FormEvent) => {
@@ -64,7 +60,7 @@ function App() {
         setAnnotationType(type)
     }
 
-    const updateControlStatus = (s: String) => {
+    const updateControlStatus = (s: string) => {
         setControlStatus(s)
     }
 
@@ -76,13 +72,13 @@ function App() {
                 removeAnnotation = {removeAnnotation}
                 updateAnnotationType = {updateAnnotationType}
                 updateControlStatus = {updateControlStatus}
-                annotationBuffers = {annotationBuffers.filter(a => a.annotationType === annotationType)}
+                annotations = {annotations.filter(a => a.type === annotationType)}
                 controlStatus = {controlStatus}
             />
             <Visualizer
                 disableInteractions={false}
                 model = {obj}
-                annotationBuffers = {annotationBuffers.filter(a => a.annotationType === annotationType)}
+                annotations = {annotations.filter(a => a.type === annotationType)}
                 layerDepth = {1}
                 annotationType = {annotationType}
                 onReady = {() => {}}

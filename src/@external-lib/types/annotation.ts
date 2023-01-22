@@ -4,10 +4,14 @@ import { SimpleVectorWithNormal } from "./vector";
 export type Annotation = PointAnnotation | PathAnnotation | GroupAnnotation | AreaAnnotation;
 
 interface CommonAnnotationProps {
+    id: number,
     /**
      * Stored annotation data.
      */
     data: AnnotationData;
+
+    title: string,
+    description: string,
 }
 
 /**
