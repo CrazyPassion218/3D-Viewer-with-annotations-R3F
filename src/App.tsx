@@ -11,6 +11,7 @@ function App() {
     const [currentAnnotation, setCurrentAnnotation] = React.useState({} as Annotation);
     const [annotationType, setAnnotationType] = React.useState('point' as string);
     const [controlStatus, setControlStatus] = React.useState('normal' as string);
+    const [selectedAnnotationId, setSelectedAnnotationId] = React.useState(0 as number);
 
     const obj = useLoader(OBJLoader, 'human_model.obj');
 
@@ -70,6 +71,10 @@ function App() {
         setControlStatus(s)
     }
 
+    const selectAnnotationId = (id: number) => {
+        setSelectedAnnotationId(id);
+    }
+
     return (
         <div style={{'height': '100%'}}>
             <ViewerControl
@@ -80,6 +85,7 @@ function App() {
                 updateControlStatus = {updateControlStatus}
                 annotations = {annotations.filter(a => (a.type === annotationType && a.title))}
                 controlStatus = {controlStatus}
+                selectAnnotationId={selectAnnotationId}
             />
             <Visualizer
                 disableInteractions={false}
@@ -91,6 +97,7 @@ function App() {
                 onClick = {()=>{}}
                 onRightClick = {() =>{}}
                 selectAnnotation = {selectAnnotation}
+                selectedAnnotationId = {selectedAnnotationId}
             />
         </div>
     );

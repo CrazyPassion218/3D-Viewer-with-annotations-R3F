@@ -41,6 +41,12 @@ interface AnnotationControllerProps{
     updateControlStatus: (s: string) => void;
 
     /**
+     * Called when annotation list is clicked.
+     * @param id number
+     */
+    selectAnnotationId: (id: number) => void;
+
+    /**
      * The list of annotations buffers for the given model.
      */
     annotations: Annotation[];
@@ -56,6 +62,7 @@ export function ViewerControl({
     insertAnnotation,
     updateAnnotation,
     removeAnnotation,
+    selectAnnotationId,
     updateControlStatus,
     annotations,
     controlStatus
@@ -134,8 +141,6 @@ export function ViewerControl({
         updateControlStatus('edit' + id);
     }
 
-
-
     const handleTitleChange = (ev: React.ChangeEvent) => {
         ev.preventDefault();
         setTitle(((ev.target) as any).value);
@@ -146,8 +151,9 @@ export function ViewerControl({
         setDescription(((ev.target) as any).value);
     }
 
-    const handleListClick = (ev: React.MouseEvent) => {
+    const handleListClick = (ev: React.MouseEvent, id: number) => {
         ev.preventDefault();
+        selectAnnotationId(id);
     }
 
     return (
@@ -166,9 +172,9 @@ export function ViewerControl({
                     id="searchType"
                     onChange={ updateAnnotationType }>
                     <option value="point">Point</option>
-                    <option value="area">Area</option>
-                    <option value="group">Group</option>
-                    <option value="path">Path</option>
+                    <option value="area" disabled>Area</option>
+                    <option value="group" disabled>Group</option>
+                    <option value="path" disabled>Path</option>
                 </select>
                 {
                     controlStatus !== 'normal'? <Button color="primary" variant="contained" disabled> Add </Button> : <Button color="primary" variant="contained" onClick={handleAddClick}> Add </Button>
@@ -229,7 +235,7 @@ export function ViewerControl({
                             )
                         } else {
                             return (
-                                <Card className="annotation-list" style={{background: '#afafaf', marginTop: '2px'}} onClick={handleListClick}>
+                                <Card className="annotation-list" style={{background: '#afafaf', marginTop: '2px'}} onClick={(ev: React.MouseEvent) => {handleListClick(ev, a.id)}}>
                                     <CardContent style={{padding: '5px 15px 0px 15px'}}>
                                         <Typography gutterBottom variant="h5" component="h5" style={{marginBottom: '0px', fontSize: '15px'}}>
                                             {a.title}
