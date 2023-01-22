@@ -18,7 +18,7 @@ function App() {
     React.useEffect(() => {
         if (controlStatus === 'normal')
             setAnnotation({} as Annotation);
-    }, [controlStatus]);
+    }, [controlStatus, annotationType]);
 
     const selectAnnotation = (a: Annotation) => {
         if (controlStatus === 'add')
@@ -76,13 +76,13 @@ function App() {
                 removeAnnotation = {removeAnnotation}
                 updateAnnotationType = {updateAnnotationType}
                 updateControlStatus = {updateControlStatus}
-                annotationBuffers = {annotationBuffers}
+                annotationBuffers = {annotationBuffers.filter(a => a.annotationType === annotationType)}
                 controlStatus = {controlStatus}
             />
             <Visualizer
                 disableInteractions={false}
                 model = {obj}
-                annotationBuffers = {annotationBuffers}
+                annotationBuffers = {annotationBuffers.filter(a => a.annotationType === annotationType)}
                 layerDepth = {1}
                 annotationType = {annotationType}
                 onReady = {() => {}}
