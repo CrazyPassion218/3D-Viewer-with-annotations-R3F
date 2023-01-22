@@ -17,11 +17,13 @@ function App() {
     React.useEffect(() => {
         if (controlStatus === 'normal')
             setCurrentAnnotation({} as Annotation);
-    }, [controlStatus, annotationType]);
+    }, [controlStatus, annotationType, annotations]);
 
     const selectAnnotation = (a: Annotation) => {
-        if (controlStatus === 'add')
+        if (controlStatus === 'annotation') {
             setCurrentAnnotation(a);
+            updateControlStatus('add');
+        }
     }
 
     const insertAnnotation = (title: string, description: string) => {
