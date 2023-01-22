@@ -170,7 +170,7 @@ export function ViewerControl({
                 controlStatus === 'annotation' ?
                     <Grid item xs={12} sm={12} md={12}>
                         <Typography gutterBottom color="red" fontSize="0.9em">
-                            Please select annotation...
+                            *Please select annotation.
                         </Typography>
                     </Grid> : ''
             }
