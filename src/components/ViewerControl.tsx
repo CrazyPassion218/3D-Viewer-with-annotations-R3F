@@ -134,6 +134,8 @@ export function ViewerControl({
         updateControlStatus('edit' + id);
     }
 
+
+
     const handleTitleChange = (ev: React.ChangeEvent) => {
         ev.preventDefault();
         setTitle(((ev.target) as any).value);
@@ -144,6 +146,10 @@ export function ViewerControl({
         setDescription(((ev.target) as any).value);
     }
 
+    const handleListClick = (ev: React.MouseEvent) => {
+        ev.preventDefault();
+    }
+
     return (
         <div style={{
             'border': '1px dark solid',
@@ -152,96 +158,100 @@ export function ViewerControl({
             'top': "10%",
             'right': "5%",
             'zIndex': "10000",}}>
-            <p>Select the type of annotation</p>
-            <select 
-                style={{'height': '35px', 'width': '140px', 'marginRight': '10px'}}
-                className="form-control" 
-                id="searchType" 
-                onChange={ updateAnnotationType }>
-                <option value="point">Point</option>
-                <option value="area">Area</option>
-                <option value="group">Group</option>
-                <option value="path">Path</option>
-            </select>
-            {
-                controlStatus !== 'normal'? <Button color="primary" variant="contained" disabled> Add </Button> : <Button color="primary" variant="contained" onClick={handleAddClick}> Add </Button>
-            }
-            {
-                controlStatus === 'annotation' ?
-                    <Grid item xs={12} sm={12} md={12}>
-                        <Typography gutterBottom color="red" fontSize="0.9em">
-                            *Please select annotation.
-                        </Typography>
-                    </Grid> : ''
-            }
-            {
-                controlStatus === 'add' ?
-                    <Grid item xs={12} sm={12} md={12}>
-                        <Paper>
-                            <Grid item xs={12}>
-                                <TextField  placeholder="title" onChange={handleTitleChange} value={title}></TextField>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField  placeholder="description" onChange={handleDescriptionChange} value={description}></TextField>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Button size="small" color="primary" onClick={handleSaveClick}>
-                                    Save
-                                </Button>
-                                <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'add')}}>
-                                    Cancel
-                                </Button>
-                            </Grid>
-                        </Paper>
-                    </Grid> : ''
-            }
-            {
-                annotations.map(a => {
-                    if (controlStatus === ('edit' + a.id)) {
-                        return (
-                            <Grid item xs={12} sm={12} md={12}>
-                                <Paper>
-                                    <Grid item xs={12}>
-                                        <TextField  placeholder="title" onChange={handleTitleChange} value={title}></TextField>
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <TextField  placeholder="description" onChange={handleDescriptionChange} value={description}></TextField>
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleChangeClick(ev, a.id)}}>
-                                            Change
-                                        </Button>
-                                        <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'change')}}>
-                                            Cancel
-                                        </Button>
-                                    </Grid>
-                                </Paper>
-                            </Grid>
-                        )
-                    } else {
-                        return (
-                            <Card>
-                                <CardContent>
-                                    <Typography gutterBottom variant="h5" component="h5">
-                                        {a.title}
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary" component="p">
-                                        {a.description}
-                                    </Typography>
-                                </CardContent>
-                                <CardActions disableSpacing>
-                                    <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleEditClick(ev, a.id)}}>
-                                        Edit
+            <center>
+                <p>Select the type of annotation</p>
+                <select
+                    style={{'height': '35px', 'width': '140px', 'marginRight': '10px'}}
+                    className="form-control"
+                    id="searchType"
+                    onChange={ updateAnnotationType }>
+                    <option value="point">Point</option>
+                    <option value="area">Area</option>
+                    <option value="group">Group</option>
+                    <option value="path">Path</option>
+                </select>
+                {
+                    controlStatus !== 'normal'? <Button color="primary" variant="contained" disabled> Add </Button> : <Button color="primary" variant="contained" onClick={handleAddClick}> Add </Button>
+                }
+                {
+                    controlStatus === 'annotation' ?
+                        <Grid item xs={12} sm={12} md={12}>
+                            <Typography gutterBottom color="red" fontSize="0.9em">
+                                *Please select annotation.
+                            </Typography>
+                        </Grid> : ''
+                }
+            </center>
+            <div style={{marginTop: '10px', height: '450px', overflow: 'auto'}}>
+                {
+                    controlStatus === 'add' ?
+                        <Grid item xs={12} sm={12} md={12} marginTop="5px">
+                            <Paper style={{background: '#b0b9e1'}}>
+                                <Grid item xs={12} padding="5px">
+                                    <input  placeholder="title" onChange={handleTitleChange} height="30px" value={title} style={{width: '98%', background: '#ffffff', height: '30px', fontSize: '15px', border: '1px solid #b0b9e1'}}></input>
+                                </Grid>
+                                <Grid item xs={12} padding="5px">
+                                    <input  placeholder="description" onChange={handleDescriptionChange} value={description} style={{width: '98%', background: '#ffffff', height: '30px', fontSize: '13px', border: '1px solid #b0b9e1'}}></input>
+                                </Grid>
+                                <Grid item xs={12} textAlign="right">
+                                    <Button size="small" color="primary" onClick={handleSaveClick}>
+                                        Save
                                     </Button>
-                                    <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a.id)}}>
-                                        Delete
+                                    <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'add')}}>
+                                        Cancel
                                     </Button>
-                                </CardActions>
-                            </Card>
-                        )
-                    }
-                })
-            }
+                                </Grid>
+                            </Paper>
+                        </Grid> : ''
+                }
+                {
+                    annotations.map(a => {
+                        if (controlStatus === ('edit' + a.id)) {
+                            return (
+                                <Grid item xs={12} sm={12} md={12} marginTop="2px">
+                                    <Paper style={{background: '#b0b9e1'}}>
+                                        <Grid item xs={12} padding="5px">
+                                            <input  placeholder="title" onChange={handleTitleChange} height="30px" value={title} style={{width: '98%', background: '#ffffff', height: '30px', fontSize: '15px', border: '1px solid #b0b9e1'}}></input>
+                                        </Grid>
+                                        <Grid item xs={12} padding="5px">
+                                            <input  placeholder="description" onChange={handleDescriptionChange} value={description} style={{width: '98%', background: '#ffffff', height: '30px', fontSize: '13px', border: '1px solid #b0b9e1'}}></input>
+                                        </Grid>
+                                        <Grid item xs={12} textAlign="right">
+                                            <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleChangeClick(ev, a.id)}}>
+                                                Change
+                                            </Button>
+                                            <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'change')}}>
+                                                Cancel
+                                            </Button>
+                                        </Grid>
+                                    </Paper>
+                                </Grid>
+                            )
+                        } else {
+                            return (
+                                <Card className="annotation-list" style={{background: '#afafaf', marginTop: '2px'}} onClick={handleListClick}>
+                                    <CardContent style={{padding: '5px 15px 0px 15px'}}>
+                                        <Typography gutterBottom variant="h5" component="h5" style={{marginBottom: '0px', fontSize: '15px'}}>
+                                            {a.title}
+                                        </Typography>
+                                        <Typography variant="body2" color="textSecondary" component="p" style={{marginBottom: '0px', fontSize: '12px'}}>
+                                            {a.description}
+                                        </Typography>
+                                    </CardContent>
+                                    <CardActions disableSpacing style={{textAlign: "right", padding: '3px', display: 'block'}}>
+                                        <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleEditClick(ev, a.id)}}>
+                                            Edit
+                                        </Button>
+                                        <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a.id)}}>
+                                            Delete
+                                        </Button>
+                                    </CardActions>
+                                </Card>
+                            )
+                        }
+                    })
+                }
+            </div>
         </div>
     );
 }
