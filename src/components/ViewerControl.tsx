@@ -55,7 +55,7 @@ export function ViewerControl({
     updateAnnotationType,
     insertAnnotation,
     // updateAnnotation,
-    // removeAnnotation,
+    removeAnnotation,
     updateControlStatus,
     annotationBuffers,
     controlStatus
@@ -63,46 +63,54 @@ export function ViewerControl({
     const [title, setTitle] = React.useState('' as String);
     const [description, setDescription] = React.useState('' as String);
 
-    const handleCancelClick = React.useCallback(
-        (ev: React.MouseEvent) => {
-            ev.preventDefault();
+    React.useEffect(() => {
+        if (controlStatus === 'normal') {
+            setTitle('');
+            setDescription('');
+        }
+    }, [controlStatus]);
 
-            updateControlStatus("normal");
-        }, [controlStatus]);
+    const handleCancelClick = (ev: React.MouseEvent) => {
+        ev.preventDefault();
 
-    const handleAddClick = React.useCallback(
-        (ev: React.MouseEvent) => {
-            ev.preventDefault();
+        updateControlStatus("normal");
+    }
 
-            updateControlStatus("add");
-        }, [controlStatus]);
+    const handleAddClick = (ev: React.MouseEvent) => {
+        ev.preventDefault();
 
-    const handleSaveClick = React.useCallback(
-        (ev: React.MouseEvent) => {
-            ev.preventDefault();
+        updateControlStatus("add");
+    }
 
-            if (!title) {
-                alert('Please input the title!');
-                return;
-            } else if (!description) {
-                alert('Please input the description!');
-                return;
-            }
+    const handleSaveClick = (ev: React.MouseEvent) => {
+        ev.preventDefault();
 
-            insertAnnotation(title, description);
-        }, [title, description]);
+        if (!title) {
+            alert('Please input the title!');
+            return;
+        } else if (!description) {
+            alert('Please input the description!');
+            return;
+        }
 
-    const handleTitleChange = React.useCallback(
-        (ev: React.ChangeEvent) => {
-            ev.preventDefault();
-            setTitle(((ev.target) as any).value);
-        }, [title]);
+        insertAnnotation(title, description);
+    }
 
-    const handleDescriptionChange = React.useCallback(
-        (ev: React.ChangeEvent) => {
-            ev.preventDefault();
-            setDescription(((ev.target) as any).value);
-        }, [description]);
+    const handleDeleteClick = (ev: React.MouseEvent, id: Number) => {
+        ev.preventDefault();
+
+        removeAnnotation(id);
+    }
+
+    const handleTitleChange = (ev: React.ChangeEvent) => {
+        ev.preventDefault();
+        setTitle(((ev.target) as any).value);
+    }
+
+    const handleDescriptionChange = (ev: React.ChangeEvent) => {
+        ev.preventDefault();
+        setDescription(((ev.target) as any).value);
+    }
 
     return (
         <div style={{
@@ -162,7 +170,7 @@ export function ViewerControl({
                             <Button size="small" color="primary">
                                 Edit
                             </Button>
-                            <Button size="small" color="secondary"/* onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a.id)}}*/>
+                            <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a.id)}}>
                                 Delete
                             </Button>
                         </CardActions>
