@@ -391,7 +391,8 @@ function renderPoint(annotationLocation: SimpleVectorWithNormal): JSX.Element {
     );
 }
 
-function renderSprite(children: string, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 45 ):JSX.Element {
+function renderSprite(children: string, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 45 ):JSX.Element | undefined {
+    if (children === undefined) return;
     const fontface = "Georgia"
     const fontsize = fontSize;
     const borderThickness =  4; 

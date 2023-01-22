@@ -17,11 +17,17 @@ function App() {
     React.useEffect(() => {
         if (controlStatus === 'normal')
             setCurrentAnnotation({} as Annotation);
-    }, [controlStatus, annotationType]);
+    }, [controlStatus, annotationType, annotations]);
 
     const selectAnnotation = (a: Annotation) => {
-        if (controlStatus === 'add')
+        if (controlStatus === 'annotation') {
+            const date = new Date();
+            a.id = date.valueOf();
+
+            setAnnotations([...annotations, a])
             setCurrentAnnotation(a);
+            updateControlStatus('add');
+        }
     }
 
     const insertAnnotation = (title: string, description: string) => {
@@ -30,19 +36,19 @@ function App() {
             return;
         }
         let annotation = currentAnnotation;
-
-        const date = new Date();
-        annotation.id = date.valueOf();
         annotation.title = title;
         annotation.description = description;
 
-        setAnnotations([...annotations, annotation])
+        updateAnnotation(annotation.id, annotation);
         setControlStatus('normal');
     }
 
     const removeAnnotation = (id: number) => {
         let _annotations = [...annotations];
-        setAnnotations(_annotations.filter(a => a.id !== id));
+
+        if (id === 0) setAnnotations(_annotations.filter(a => a.id !== currentAnnotation.id));
+        else setAnnotations(_annotations.filter(a => a.id !== id));
+
         setControlStatus('normal');
     }
 
