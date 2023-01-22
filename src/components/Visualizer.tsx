@@ -391,7 +391,9 @@ function renderPoint(annotationLocation: SimpleVectorWithNormal): JSX.Element {
     );
 }
 
-function renderSprite(children: string, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 35 ):JSX.Element {
+function renderSprite(children: string, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 35 ):JSX.Element | undefined {
+    if (children === undefined) return;
+
     const fontsize = fontSize;
     const borderThickness =  4;
     const location = new Three.Vector3(position.x, position.y, position.z);

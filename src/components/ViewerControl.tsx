@@ -70,8 +70,12 @@ export function ViewerControl({
         }
     }, [controlStatus]);
 
-    const handleCancelClick = (ev: React.MouseEvent) => {
+    const handleCancelClick = (ev: React.MouseEvent, key: string) => {
         ev.preventDefault();
+
+        if (key === 'add') {
+            removeAnnotation(0);
+        }
 
         updateControlStatus("normal");
     }
@@ -184,7 +188,7 @@ export function ViewerControl({
                                 <Button size="small" color="primary" onClick={handleSaveClick}>
                                     Save
                                 </Button>
-                                <Button size="small" color="secondary" onClick={handleCancelClick}>
+                                <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'add')}}>
                                     Cancel
                                 </Button>
                             </Grid>
@@ -207,7 +211,7 @@ export function ViewerControl({
                                         <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleChangeClick(ev, a.id)}}>
                                             Change
                                         </Button>
-                                        <Button size="small" color="secondary" onClick={handleCancelClick}>
+                                        <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'change')}}>
                                             Cancel
                                         </Button>
                                     </Grid>
