@@ -14,7 +14,7 @@ export const ORBIT_CONTROLS_SETTINGS = {
 
 export const LIGHT_POSITION = new Three.Vector3(5, 10, 2);
 
-export const SPHERE_GEOMETRY = new Three.SphereGeometry(0.15);
+export const SPHERE_GEOMETRY = new Three.SphereGeometry(0.1);
 
 export const MESH_MATERIAL = new Three.MeshLambertMaterial({
     emissive: new Three.Color(POINT_ANNOTATION_COLOR),
