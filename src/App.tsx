@@ -2,7 +2,7 @@ import React from "react";
 import './App.css';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { useLoader } from '@react-three/fiber'
-import { Visualizer } from './viewer'
+import { Visualizer } from './components/Visualizer'
 import { ViewerControl } from './components/ViewerControl'
 import { Annotation } from "@external-lib";
 

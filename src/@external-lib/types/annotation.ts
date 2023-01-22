@@ -1,3 +1,4 @@
+import { Vector3 } from "three";
 import { AnnotationData, AnnotationData_Heatmap } from "./annotationData";
 import { SimpleVectorWithNormal } from "./vector";
 
@@ -9,7 +10,7 @@ interface CommonAnnotationProps {
      * Stored annotation data.
      */
     data: AnnotationData;
-
+    location: SimpleVectorWithNormal,
     title: string,
     description: string,
 }
