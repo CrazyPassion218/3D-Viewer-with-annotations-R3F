@@ -54,7 +54,7 @@ interface AnnotationControllerProps{
 export function ViewerControl({
     updateAnnotationType,
     insertAnnotation,
-    // updateAnnotation,
+    updateAnnotation,
     removeAnnotation,
     updateControlStatus,
     annotationBuffers,
@@ -96,10 +96,39 @@ export function ViewerControl({
         insertAnnotation(title, description);
     }
 
+    const handleChangeClick = (ev: React.MouseEvent, id: Number) => {
+        ev.preventDefault();
+
+        if (!title) {
+            alert('Please input the title!');
+            return;
+        } else if (!description) {
+            alert('Please input the description!');
+            return;
+        }
+
+        const a = annotationBuffers.filter(a => a.id === id);
+        let _a = a[0];
+        _a.title = title;
+        _a.description = description;
+
+        updateAnnotation(id, _a);
+        updateControlStatus('normal');
+    }
+
     const handleDeleteClick = (ev: React.MouseEvent, id: Number) => {
         ev.preventDefault();
 
         removeAnnotation(id);
+    }
+
+    const handleEditClick = (ev: React.MouseEvent, id: Number) => {
+        ev.preventDefault();
+
+        const a = annotationBuffers.filter(a => a.id === id);
+        setTitle(a[0].title);
+        setDescription(a[0].description);
+        updateControlStatus('edit' + id);
     }
 
     const handleTitleChange = (ev: React.ChangeEvent) => {
@@ -156,26 +185,51 @@ export function ViewerControl({
                     </Grid> : ''
             }
             {
-                annotationBuffers.map(a =>
-                    <Card>
-                        <CardContent>
-                            <Typography gutterBottom variant="h5" component="h2">
-                                {a.title}
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary" component="p">
-                                {a.description}
-                            </Typography>
-                        </CardContent>
-                        <CardActions disableSpacing>
-                            <Button size="small" color="primary">
-                                Edit
-                            </Button>
-                            <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a.id)}}>
-                                Delete
-                            </Button>
-                        </CardActions>
-                    </Card>
-                )
+                annotationBuffers.map(a => {
+                    if (controlStatus === ('edit' + a.id)) {
+                        return (
+                            <Grid item xs={12} sm={12} md={12}>
+                                <Paper>
+                                    <Grid item xs={12}>
+                                        <TextField  placeholder="title" onChange={handleTitleChange} value={title}></TextField>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField  placeholder="description" onChange={handleDescriptionChange} value={description}></TextField>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleChangeClick(ev, a.id)}}>
+                                            Change
+                                        </Button>
+                                        <Button size="small" color="secondary" onClick={handleCancelClick}>
+                                            Cancel
+                                        </Button>
+                                    </Grid>
+                                </Paper>
+                            </Grid>
+                        )
+                    } else {
+                        return (
+                            <Card>
+                                <CardContent>
+                                    <Typography gutterBottom variant="h5" component="h2">
+                                        {a.title}
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary" component="p">
+                                        {a.description}
+                                    </Typography>
+                                </CardContent>
+                                <CardActions disableSpacing>
+                                    <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleEditClick(ev, a.id)}}>
+                                        Edit
+                                    </Button>
+                                    <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a.id)}}>
+                                        Delete
+                                    </Button>
+                                </CardActions>
+                            </Card>
+                        )
+                    }
+                })
             }
         </div>
     );
