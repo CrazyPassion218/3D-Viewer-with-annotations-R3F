@@ -81,16 +81,16 @@ export function ViewerControl({
         (ev: React.MouseEvent) => {
             ev.preventDefault();
 
-            // if (!title) {
-            //     alert('Please input the title!');
-            //     return;
-            // } else if (!description) {
-            //     alert('Please input the description!');
-            //     return;
-            // }
+            if (!title) {
+                alert('Please input the title!');
+                return;
+            } else if (!description) {
+                alert('Please input the description!');
+                return;
+            }
 
             insertAnnotation(title, description);
-        }, [controlStatus]);
+        }, [title, description]);
 
     const handleTitleChange = React.useCallback(
         (ev: React.ChangeEvent) => {
