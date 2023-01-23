@@ -4,7 +4,7 @@ import { /*DEFAULT_ANNOTATION_COLOR, */POINT_ANNOTATION_COLOR } from "./colors";
 export const INITIAL_CAMERA_SETTINGS = {
     fov: 70,
     aspect: window.innerWidth / window.innerHeight,
-    position : new Three.Vector3(5, 5, 5)
+    position : new Three.Vector3(0, 11, 7)
 };
 
 export const ORBIT_CONTROLS_SETTINGS = {
