@@ -13,6 +13,7 @@ interface CommonAnnotationProps {
     location: SimpleVectorWithNormal,
     title: string,
     description: string,
+    face: SimpleFaceWithNormal;
 }
 
 /**
@@ -24,7 +25,7 @@ export interface PointAnnotation extends CommonAnnotationProps {
     /**
      * The face of the point on the model.
      */
-    face: SimpleFaceWithNormal;
+    
 }
 
 /**

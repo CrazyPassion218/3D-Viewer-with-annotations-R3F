@@ -110,6 +110,7 @@ export function Visualizer({
     selectedAnnotationId
 }: VisualizerProps) {
     const [state, setState] = React.useState<VisualizerState>();
+    const [cameraLocation, setCameraLocation] = React.useState();
     // TODO use `layerDepth` to show the various layers of an object
     // compute the box that contains all the stuff in the model
     const modelBoundingBox = new Three.Box3().setFromObject(model);
@@ -121,7 +122,7 @@ export function Visualizer({
                 return annotation.id === selectedAnnotationId;
             })
             if(selectedAnnotation.length !== 0){
-                // console.log(selectedAnnotation[0].location.normal);
+                console.log(selectedAnnotation[0].face.normal);
                 // state?.camera.lookAt(selectedAnnotation[0].location.x, selectedAnnotation[0].location.y, selectedAnnotation[0].location.z);
                 // state?.camera.position.set(selectedAnnotation[0].location.x + selectedAnnotation[0].location.normal.x * 1, selectedAnnotation[0].location.y + selectedAnnotation[0].location.normal.y * 1, selectedAnnotation[0].location.z + selectedAnnotation[0].location.normal.z * 1);
                 // state?.camera.updateProjectionMatrix();
