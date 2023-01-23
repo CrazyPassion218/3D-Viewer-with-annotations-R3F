@@ -5,6 +5,7 @@ import { useLoader } from '@react-three/fiber'
 import { Visualizer } from './components/Visualizer'
 import { ViewerControl } from './components/ViewerControl'
 import { Annotation } from "@external-lib";
+import { ObjectLoader } from "three";
 
 function App() {
     const [annotations, setAnnotations] = React.useState([] as Annotation[]);
