@@ -280,7 +280,7 @@ export function Visualizer({
             )}
             {annotations.map((annotation) =>
                 visitAnnotation(annotation, {
-                    area: (a) => undefined,
+                    area: (a) => renderSprite(a.title, a.center, 1),
                     group: (a) => undefined, // not sure if this is a good way to do things
                     point: (a) => renderSprite(a.title, a.location, 1),
                     path: () => undefined, // Paths are not currently supported, ignore this
