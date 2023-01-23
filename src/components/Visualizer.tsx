@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as Three from "three";
+import { useRef } from "react";
 import {
     Annotation,
     SimpleVector2,
@@ -14,7 +15,7 @@ import {
     MINIMUM_INTENSITY,
     IntensityValue,
 } from "@external-lib";
-import { Canvas, RootState, useThree } from "@react-three/fiber";
+import { Canvas, RootState, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { AREA_ANNOTATION_COLOR, getHeatmapColor, SCENE_BACKGROUND_COLOR } from "../common/colors";
 import { findTween, getTween } from "../utils/tweenUtils";
@@ -31,7 +32,7 @@ import {
     SPHERE_GEOMETRY,
     MESH_MATERIAL,
 } from "common/constants";
-import { Vector3 } from "three";
+import { Mesh, Vector, Vector3 } from "three";
 
 interface VisualizerProps {
     /**
@@ -110,7 +111,6 @@ export function Visualizer({
     selectedAnnotationId
 }: VisualizerProps) {
     const [state, setState] = React.useState<VisualizerState>();
-    const [cameraLocation, setCameraLocation] = React.useState();
     // TODO use `layerDepth` to show the various layers of an object
     // compute the box that contains all the stuff in the model
     const modelBoundingBox = new Three.Box3().setFromObject(model);
@@ -122,10 +122,15 @@ export function Visualizer({
                 return annotation.id === selectedAnnotationId;
             })
             if(selectedAnnotation.length !== 0){
-                console.log(selectedAnnotation[0].face.normal);
-                // state?.camera.lookAt(selectedAnnotation[0].location.x, selectedAnnotation[0].location.y, selectedAnnotation[0].location.z);
-                // state?.camera.position.set(selectedAnnotation[0].location.x + selectedAnnotation[0].location.normal.x * 1, selectedAnnotation[0].location.y + selectedAnnotation[0].location.normal.y * 1, selectedAnnotation[0].location.z + selectedAnnotation[0].location.normal.z * 1);
-                // state?.camera.updateProjectionMatrix();
+                const directVec = selectedAnnotation[0].face.normal;
+                const distance = 3;
+                let cameraPosition = state?.camera.position;
+                let objectPosition = new Vector3(selectedAnnotation[0].location.x, selectedAnnotation[0].location.y, selectedAnnotation[0].location.z);
+                const newPosition = new Three.Vector3(selectedAnnotation[0].location.x + directVec.x * distance, selectedAnnotation[0].location.y + directVec.y * distance, selectedAnnotation[0].location.z + directVec.z * distance);
+                state?.renderer.setAnimationLoop(() => {
+                    state.camera.lookAt(objectPosition);
+                    state.camera.position.lerp(newPosition, 0.1);
+                })
             }
         },[selectedAnnotationId]
     )
@@ -269,7 +274,7 @@ export function Visualizer({
                 }}
                 target={modelBoundingBoxCenter}
             />
-            <primitive object={model} />
+            <primitive object={model}/>
             {annotations.map((annotation) =>
                 visitAnnotation(annotation, {
                     area: (a) => renderAreaAnnotation(a, model),
@@ -403,6 +408,7 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
 
 // Just renders a sphere
 function renderPoint(annotationLocation: SimpleVectorWithNormal): JSX.Element {
+
     return (
         <mesh
             geometry={SPHERE_GEOMETRY}
