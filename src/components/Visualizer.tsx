@@ -4,6 +4,7 @@ import {
     Annotation,
     SimpleVector2,
     SimpleVectorWithNormal,
+    SimpleFaceWithNormal,
     visitAnnotation,
     AreaAnnotation,
     GroupAnnotation,
@@ -191,8 +192,9 @@ export function Visualizer({
                     selectAnnotation({
                         type: "point",
                         location: {
-                            x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
+                            x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z
                         } as SimpleVectorWithNormal,
+                        face: intersections[0].face as unknown as SimpleFaceWithNormal,
                         data: {
                             type: 'basic'
                         }

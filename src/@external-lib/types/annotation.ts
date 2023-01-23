@@ -1,6 +1,6 @@
 import { Vector3 } from "three";
 import { AnnotationData, AnnotationData_Heatmap } from "./annotationData";
-import { SimpleVectorWithNormal } from "./vector";
+import { SimpleFaceWithNormal, SimpleVector3, SimpleVectorWithNormal } from "./vector";
 
 export type Annotation = PointAnnotation | PathAnnotation | GroupAnnotation | AreaAnnotation;
 
@@ -22,9 +22,9 @@ export interface PointAnnotation extends CommonAnnotationProps {
     type: "point";
 
     /**
-     * The location of the point on the model.
+     * The face of the point on the model.
      */
-    location: SimpleVectorWithNormal;
+    face: SimpleFaceWithNormal;
 }
 
 /**

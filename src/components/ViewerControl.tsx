@@ -172,7 +172,7 @@ export function ViewerControl({
                     id="searchType"
                     onChange={ updateAnnotationType }>
                     <option value="point">Point</option>
-                    <option value="area" disabled>Area</option>
+                    <option value="area">Area</option>
                     <option value="group" disabled>Group</option>
                     <option value="path" disabled>Path</option>
                 </select>
