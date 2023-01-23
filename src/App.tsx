@@ -18,7 +18,14 @@ function App() {
     React.useEffect(() => {
         if (controlStatus === 'normal')
             setCurrentAnnotation({} as Annotation);
-    }, [controlStatus, annotationType, annotations]);
+    }, [controlStatus, annotations]);
+
+    React.useEffect(() => {
+        setAnnotations([] as Annotation[]);
+        setTimeout(function() {
+            setAnnotations([...annotations]);
+        }, 100);
+    }, [annotationType])
 
     const selectAnnotation = (a: Annotation) => {
         if (controlStatus === 'annotation') {
@@ -47,8 +54,11 @@ function App() {
     const removeAnnotation = (id: number) => {
         let _annotations = [...annotations];
 
-        if (id === 0) setAnnotations(_annotations.filter(a => a.id !== currentAnnotation.id));
-        else setAnnotations(_annotations.filter(a => a.id !== id));
+        setAnnotations([] as Annotation[]);
+        setTimeout(function() {
+            if (id === 0) setAnnotations(_annotations.filter(a => a.id !== currentAnnotation.id));
+            else setAnnotations(_annotations.filter(a => a.id !== id));
+        }, 100);
 
         setControlStatus('normal');
     }
@@ -58,7 +68,11 @@ function App() {
         _annotations.map(_a => {
             return (_a.id === id) ? a : _a;
         });
-        setAnnotations(_annotations);
+        setAnnotations([] as Annotation[]);
+        setTimeout(function() {
+            setAnnotations(_annotations);
+        }, 100);
+
         setControlStatus('normal');
     }
 
