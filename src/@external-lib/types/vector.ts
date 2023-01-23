@@ -16,3 +16,11 @@ export interface SimpleVector2 {
 export interface SimpleVectorWithNormal extends SimpleVector3 {
     normal: SimpleVector3;
 }
+
+export interface SimpleFaceWithNormal extends SimpleVector3 {
+    a: number,
+    b: number,
+    c: number,
+    materialIndex: number,
+    normal: SimpleVector3
+}
