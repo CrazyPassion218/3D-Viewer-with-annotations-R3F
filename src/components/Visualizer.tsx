@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as Three from "three";
-import { useRef } from "react";
+import { Html } from "@react-three/drei"
 import {
     Annotation,
     SimpleVector2,
@@ -33,6 +33,7 @@ import {
     MESH_MATERIAL,
 } from "common/constants";
 import { Mesh, Vector, Vector3 } from "three";
+import { padding } from "csx";
 
 interface VisualizerProps {
     /**
@@ -444,57 +445,19 @@ function renderSprite(annotation: Annotation, position: SimpleVectorWithNormal, 
     if(annoId !== annotation.id)opacity = 0;
     if(annotation.title === undefined) return;
     let children = annotation.title;
-    const fontface = "Georgia"
-    const fontsize = fontSize;
-    const borderThickness = 3; 
-	var borderColor = {r:0, g:0, b:0, a:1.0};
-    var backgroundColor = {r:10, g:10, b:10, a:1.0};
-    const location = new Three.Vector3(position.x , position.y - 0.8, position.z );
-    const canvas = document.createElement('canvas');
-    canvas.width += children.length * 30;
-    const context = canvas.getContext('2d');
-    if(context){
-        // context.textBaseline = 'middle'
-        // context.font = `${fontSize}px -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto, segoe ui, arial, sans-serif`
-        context.font = "Bold " + fontsize + "px " + fontface;
-        const metrics = context.measureText( children );
-        const textWidth = metrics.width;
-        context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
-								  + backgroundColor.b + "," + backgroundColor.a + ")";
-        // border color
-        context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + ","
-                                    + borderColor.b + "," + borderColor.a + ")";
-
-        context.lineWidth = borderThickness;
-        roundRect(context, borderThickness/2, borderThickness/2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 6);
-        context.fillStyle = "rgba(255, 255, 255 , 1.0)";
-        // context.fillStyle = color
-        context.fillText( children, borderThickness, fontsize + borderThickness);
-    }
     return (
-        <sprite
-            scale={[3, 1.4, 1]}
-            position={location}>
-            <spriteMaterial  transparent alphaTest={opacity} depthTest={false} opacity={opacity}>
-                <canvasTexture attach="map" image={canvas}/>
-            </spriteMaterial>
-        </sprite>
+        <Dodecahedron position={[annotation.location.x, annotation.location.y, annotation.location.z]} opacity={opacity} title={annotation.title} description={annotation.description}/>
     )
 }
-
-function roundRect(ctx : CanvasRenderingContext2D, x : any, y : any, w : any, h : any, r : any) 
-{
-    ctx.beginPath();
-    ctx.moveTo(x/2 + r, y/2);
-    ctx.lineTo(x+w-r, y);
-    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-    ctx.lineTo(x+w, y+h-r);
-    ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-    ctx.lineTo(x+r, y+h);
-    ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-    ctx.lineTo(x, y+r);
-    ctx.quadraticCurveTo(x, y, x+r, y);
-    ctx.closePath();
-    ctx.fill();
-	ctx.stroke();   
+function Dodecahedron({ ...props }) {
+return (
+    <mesh {...props}>
+    <Html distanceFactor={10}>
+        <div style={{paddingTop : '12px', width: props.title.length * 11 + 'px', textAlign: 'left', background: 'rgba(2,2,2,0.8)', color: 'white', padding: '10px 5px',  borderRadius: '5px', opacity: props.opacity}}>
+        <h4 style={{padding: '0', margin: '0', color: 'red'}}>{props.title}</h4>
+        <p style={{padding: '0', margin: '0', fontSize: '10px '}}>{props.description}</p>
+        </div>
+    </Html>
+    </mesh>
+)
 }
