@@ -15,9 +15,9 @@ import {
     MINIMUM_INTENSITY,
     IntensityValue,
 } from "@external-lib";
-import { Canvas, RootState, ThreeElements, useFrame, useThree } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
-import { AREA_ANNOTATION_COLOR, getHeatmapColor, SCENE_BACKGROUND_COLOR, POINT_ANNOTATION_COLOR } from "../common/colors";
+
+import { Canvas, RootState  } from "@react-three/fiber";
+import { AREA_ANNOTATION_COLOR, getHeatmapColor, SCENE_BACKGROUND_COLOR } from "../common/colors";
 import { findTween, getTween } from "../utils/tweenUtils";
 import {
     convertToThreeJSVector,
@@ -32,9 +32,8 @@ import {
     SPHERE_GEOMETRY,
     MESH_MATERIAL,
 } from "common/constants";
-import { Mesh, Vector, Vector3 } from "three";
-import { padding } from "csx";
-
+import { Vector3 } from "three";
+import { OrbitControls } from "@react-three/drei";
 interface VisualizerProps {
     /**
      * Determines whether the canvas should be interactive. If set to `true`, you should not be able to move the camera
@@ -116,15 +115,14 @@ export function Visualizer({
     const modelBoundingBoxCenter = modelBoundingBox.getCenter(new Three.Vector3());
 
     const [state, setState] = React.useState<VisualizerState>();
-    const [hasEvent, setHasEvent] = React.useState<boolean>(true);
     const [orbitControlTarget, setOrbitControlTarget] = React.useState<Three.Vector3>(modelBoundingBoxCenter);
+    const [enableOrbitCamera, setEnableOrbitCamera] = React.useState<boolean>(true);
     const [spriteOpacity, setSpriteOpacity] = React.useState<number>(0);
     const [annoId, setAnnoId] = React.useState<number>(1);
     const [annoMaterial, setAnnoMaterial] = React.useState<Three.MeshLambertMaterial>(MESH_MATERIAL);
     // TODO use `layerDepth` to show the various layers of an object
     // compute the box that contains all the stuff in the model
     
-
     React.useEffect(
         () => {
             if (selectedAnnotation) {
@@ -134,8 +132,8 @@ export function Visualizer({
                     emissive: new Three.Color('#fff'),
                     emissiveIntensity: 0.45,
                 }))
-                
                 if(selectedAnnotation.face){
+                    setEnableOrbitCamera(false);
                     //here, camera focus on selected annotation. (this code is right but not fianal, and when we control camera scheme, this should be edited.)
                     const directVec = selectedAnnotation.face.normal;
                     const distance = 5;
@@ -206,6 +204,7 @@ export function Visualizer({
     const handleClick = React.useCallback(
         (ev: React.MouseEvent) => {
             state?.renderer.setAnimationLoop(null);
+            setEnableOrbitCamera(true);
             const clickContext = getClickContext(ev);
             if (disableInteractions || clickContext === undefined || clickContext.intersections.length === 0) {
                 return;
@@ -283,6 +282,7 @@ export function Visualizer({
             onCreated={handleCanvasCreated}
         >
             <directionalLight color={0xffffff} intensity={1} position={LIGHT_POSITION} />
+            {enableOrbitCamera && 
             <OrbitControls
                 enabled={!disableInteractions}
                 enableDamping={true}
@@ -296,7 +296,7 @@ export function Visualizer({
                     RIGHT: undefined,
                 }}
                 target={orbitControlTarget}
-            />
+            />}
             <primitive object={model}/>
             {annotations.map((annotation) =>
                 visitAnnotation(annotation, {
@@ -457,7 +457,7 @@ function renderSprite(annotation: Annotation, position: SimpleVectorWithNormal, 
     // if(!annoId)opacity = 0;
     if(annoId !== annotation.id)opacity = 0;
     if(annotation.title === undefined) return;
-    let children = annotation.title;
+    // let children = annotation.title;
     return (
         <Dodecahedron position={[annotation.location.x, annotation.location.y, annotation.location.z]} opacity={opacity} title={annotation.title} description={annotation.description}/>
     )
