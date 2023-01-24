@@ -18,6 +18,7 @@ export function AppLayout({
     const [annotationType, setAnnotationType] = React.useState('point' as string);
     const [controlStatus, setControlStatus] = React.useState('normal' as string);
     const [selectedAnnotation, setSelectedAnnotation] = React.useState({} as Annotation);
+    const [search, setSearch] = React.useState('' as string);
 
     React.useEffect(() => {
         if (controlStatus === 'normal')
@@ -94,6 +95,16 @@ export function AppLayout({
         setSelectedAnnotation(annotation);
     }
 
+    const changeSearch = (value: string) => {
+        setSearch(value);
+
+        const viewAnnotation = annotations.filter(a => a.title === value);
+        if (viewAnnotation.length === 1) {
+            console.log('ddd');
+            selectAnnotationControl(viewAnnotation[0]);
+        }
+    }
+
     return (
         <div style={{'height': '100%'}}>
             <AnnotationBar
@@ -102,14 +113,15 @@ export function AppLayout({
                 removeAnnotation = {removeAnnotation}
                 updateAnnotationType = {updateAnnotationType}
                 updateControlStatus = {updateControlStatus}
-                annotations = {annotations.filter(a => (a.type === annotationType && a.description))}
+                annotations = {annotations.filter(a => (a.type === annotationType && a.title && (!search || a.title === search)))}
                 controlStatus = {controlStatus}
                 selectAnnotationControl = {selectAnnotationControl}
+                changeSearch = {changeSearch}
             />
             <Visualizer
                 disableInteractions={false}
                 model = {model}
-                annotations = {annotations.filter(a => a.type === annotationType)}
+                annotations = {annotations.filter(a => a.type === annotationType && (!search || a.title === search))}
                 layerDepth = {1}
                 annotationType = {annotationType}
                 onReady = {() => {}}

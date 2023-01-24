@@ -5,8 +5,11 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 
 import { Annotation } from "@external-lib";
-import { Select, Button, Form, Input } from "antd";
-import { PlusOutlined, EditFilled, DeleteFilled } from "@ant-design/icons";
+import { Select, Button, Form, Input, Checkbox } from "antd";
+import { PlusOutlined, EditFilled, DeleteFilled, AudioOutlined } from "@ant-design/icons";
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
+
+const { Search } = Input;
 
 const validateMessages = {
     required: '${label} is required!',
@@ -51,6 +54,12 @@ interface AnnotationControllerProps{
     selectAnnotationControl: (a: Annotation) => void;
 
     /**
+     * Called when search string is changed.
+     * @param value string
+     */
+    changeSearch: (value: string) => void;
+
+    /**
      * The list of annotations buffers for the given model.
      */
     annotations: Annotation[];
@@ -68,10 +77,13 @@ export function AnnotationBar({
     removeAnnotation,
     selectAnnotationControl,
     updateControlStatus,
+    changeSearch,
     annotations,
     controlStatus
 }: AnnotationControllerProps) {
     const [form] = Form.useForm();
+    const [indeterminate, setIndeterminate] = React.useState(true);
+    const [checkAll, setCheckAll] = React.useState(false);
 
     const handleCancelClick = (ev: React.MouseEvent, key: string) => {
         ev.preventDefault();
@@ -118,33 +130,45 @@ export function AnnotationBar({
         selectAnnotationControl(annotation);
     }
 
+    const onSearch = (value: string) => {
+        changeSearch(value);
+    };
+
+    const onCheckAllChange = (e: CheckboxChangeEvent) => {
+        setIndeterminate(false);
+        setCheckAll(e.target.checked);
+    }
+
     return (
         <div style={{
             border: '1px dark solid',
             position: "absolute",
             textAlign: 'center',
             width: "250px",
-            top: "10%",
+            top: "5%",
             right: "5%",
             zIndex: 100,
             background: '#6e7377'
         }}>
+            <Search placeholder="input search text" onSearch={onSearch} enterButton onChange={(ev: React.ChangeEvent) => onSearch(((ev.target) as any).value)} />
             <p style={{color: 'white'}}>Select the type of annotation</p>
-            <Select
-                defaultValue="Point"
-                style={{ width: 120, marginRight: 10}}
-                onChange={updateAnnotationType}
-                options={[
-                    { value: 'point', label: 'Point' },
-                    { value: 'area', label: 'Area' },
-                    { value: 'group', label: 'group', disabled: true },
-                ]}
-            />
-            {
-                controlStatus !== 'normal'?
-                    <Button type="primary" shape="circle" icon={<PlusOutlined />} disabled></Button> :
-                    <Button type="primary" shape="circle" icon={<PlusOutlined />} onClick={handleAddClick}></Button>
-            }
+            <div>
+                <Select
+                    defaultValue="Point"
+                    style={{ width: 120, marginRight: 10}}
+                    onChange={updateAnnotationType}
+                    options={[
+                        { value: 'point', label: 'Point' },
+                        { value: 'area', label: 'Area' },
+                        { value: 'group', label: 'group', disabled: true },
+                    ]}
+                />
+                {
+                    controlStatus !== 'normal'?
+                        <Button type="primary" shape="circle" icon={<PlusOutlined />} disabled></Button> :
+                        <Button type="primary" shape="circle" icon={<PlusOutlined />} onClick={handleAddClick}></Button>
+                }
+            </div>
             <div style={{marginTop: '10px', height: '450px', overflow: 'auto'}}>
                 {
                     controlStatus === 'annotation' ?

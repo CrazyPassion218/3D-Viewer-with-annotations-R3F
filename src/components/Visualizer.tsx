@@ -129,13 +129,13 @@ export function Visualizer({
                     emissive: new Three.Color('#ffo'),
                     emissiveIntensity: 1,
                 }))
-                // const directVec = selectedAnnotation[0].face.normal;
-                
+                // const directVec = selectedAnnotation.face.normal;
+                //
                 // const distance = 7;
                 // let cameraCurrent = state?.camera;
-                // let objectPosition = new Vector3(selectedAnnotation[0].location.x, selectedAnnotation[0].location.y, selectedAnnotation[0].location.z);
+                // let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
                 // console.log(objectPosition);
-                // const newPosition = new Three.Vector3(selectedAnnotation[0].location.x + directVec.x * distance, selectedAnnotation[0].location.y + directVec.y * distance, selectedAnnotation[0].location.z + directVec.z * distance);
+                // const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
                 // console.log(newPosition);
                 // cameraCurrent?.position?.set(newPosition.x, newPosition.y, newPosition.z);
                 // cameraCurrent?.lookAt(objectPosition);
