@@ -15,9 +15,9 @@ import {
     MINIMUM_INTENSITY,
     IntensityValue,
 } from "@external-lib";
-import { Canvas, RootState, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, RootState, ThreeElements, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { AREA_ANNOTATION_COLOR, getHeatmapColor, SCENE_BACKGROUND_COLOR } from "../common/colors";
+import { AREA_ANNOTATION_COLOR, getHeatmapColor, SCENE_BACKGROUND_COLOR, POINT_ANNOTATION_COLOR } from "../common/colors";
 import { findTween, getTween } from "../utils/tweenUtils";
 import {
     convertToThreeJSVector,
@@ -114,6 +114,7 @@ export function Visualizer({
     const [state, setState] = React.useState<VisualizerState>();
     const [spriteOpacity, setSpriteOpacity] = React.useState<number>(0);
     const [annoId, setAnnoId] = React.useState<number>(0);
+    const [annoMaterial, setAnnoMaterial] = React.useState<Three.MeshLambertMaterial>(MESH_MATERIAL);
     // TODO use `layerDepth` to show the various layers of an object
     // compute the box that contains all the stuff in the model
     const modelBoundingBox = new Three.Box3().setFromObject(model);
@@ -125,16 +126,29 @@ export function Visualizer({
                 return annotation.id === selectedAnnotationId;
             })
             if(selectedAnnotation.length !== 0){
-                const directVec = selectedAnnotation[0].face.normal;
-                const distance = 4;
-                let cameraPosition = state?.camera.position;
-                let objectPosition = new Vector3(selectedAnnotation[0].location.x, selectedAnnotation[0].location.y, selectedAnnotation[0].location.z);
-                const newPosition = new Three.Vector3(selectedAnnotation[0].location.x + directVec.x * distance, selectedAnnotation[0].location.y + directVec.y * distance, selectedAnnotation[0].location.z + directVec.z * distance);
-                state?.renderer.setAnimationLoop(() => {
-                    // if()
-                    state.camera.lookAt(objectPosition);
-                    state.camera.position.lerp(newPosition, 0.1);
-                })
+                console.log(selectedAnnotation[0].material);
+                setAnnoId(selectedAnnotation[0].id);
+                setAnnoMaterial(new Three.MeshLambertMaterial({
+                    emissive: new Three.Color('#ffo'),
+                    emissiveIntensity: 1,
+                }))
+                // const directVec = selectedAnnotation[0].face.normal;
+                
+                // const distance = 7;
+                // let cameraCurrent = state?.camera;
+                // let objectPosition = new Vector3(selectedAnnotation[0].location.x, selectedAnnotation[0].location.y, selectedAnnotation[0].location.z);
+                // console.log(objectPosition);
+                // const newPosition = new Three.Vector3(selectedAnnotation[0].location.x + directVec.x * distance, selectedAnnotation[0].location.y + directVec.y * distance, selectedAnnotation[0].location.z + directVec.z * distance);
+                // console.log(newPosition);
+                // cameraCurrent?.position?.set(newPosition.x, newPosition.y, newPosition.z);
+                // cameraCurrent?.lookAt(objectPosition);
+                // cameraCurrent?.updateProjectionMatrix();
+                // state?.renderer.setAnimationLoop(() => {
+                //     // if()
+                //     cameraCurrent?.lookAt(objectPosition);
+                //     cameraCurrent?.position.lerp(newPosition, 0.05);
+                //     cameraCurrent?.updateProjectionMatrix();
+                // })
             }
         },[selectedAnnotationId]
     )
@@ -205,6 +219,7 @@ export function Visualizer({
                             x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z
                         } as SimpleVectorWithNormal,
                         face: intersections[0].face as unknown as SimpleFaceWithNormal,
+                        material: annoMaterial, 
                         data: {
                             type: 'basic'
                         }
@@ -286,9 +301,9 @@ export function Visualizer({
             <primitive object={model}/>
             {annotations.map((annotation) =>
                 visitAnnotation(annotation, {
-                    area: (a) => renderAreaAnnotation(a, model, handleOpacity, setAnnoId),
-                    group: (a) => <>{renderGroupAnnotation(a, model, handleOpacity, setAnnoId)}</>, // not sure if this is a good way to do things
-                    point: (a) => renderPointAnnotation(a, model, handleOpacity, setAnnoId),
+                    area: (a) => renderAreaAnnotation(a, model, handleOpacity, setAnnoId, annoMaterial, annoId),
+                    group: (a) => <>{renderGroupAnnotation(a, model, handleOpacity, setAnnoId, annoMaterial, annoId)}</>, // not sure if this is a good way to do things
+                    point: (a) => renderPointAnnotation(a, model, handleOpacity, setAnnoId, annoMaterial, annoId),
                     path: () => undefined, // Paths are not currently supported, ignore this
                     unknown: () => undefined,
                 })
@@ -306,10 +321,10 @@ export function Visualizer({
     );
 }
 
-function renderAreaAnnotation(annotation: AreaAnnotation, model: Three.Object3D, handleOpacity:Function, setAnnoId:Function): JSX.Element | undefined {
+function renderAreaAnnotation(annotation: AreaAnnotation, model: Three.Object3D, handleOpacity:Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId: number): JSX.Element | undefined {
     const mesh = model.children.find((c): c is Three.Mesh => c instanceof Three.Mesh);
     if (mesh === undefined) {
-        return renderPoint(annotation, handleOpacity, setAnnoId);
+        return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
     }
     
     if(!mesh.geometry.attributes.color){	    
@@ -336,10 +351,10 @@ function renderAreaAnnotation(annotation: AreaAnnotation, model: Three.Object3D,
     mesh.geometry.setAttribute("color", colorsAttribute);
     mesh.geometry.attributes.color.needsUpdate = true;
     
-    return renderPoint(annotation, handleOpacity, setAnnoId);
+    return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
 }
 
-function renderGroupAnnotation(annotation: GroupAnnotation, model: Three.Object3D, handleOpacity: Function, setAnnoId:Function): JSX.Element[] {
+function renderGroupAnnotation(annotation: GroupAnnotation, model: Three.Object3D, handleOpacity: Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element[] {
     return compact(
         annotation.groupIds.map((group) => {
             const obj = model.getObjectByName(group);
@@ -358,7 +373,7 @@ function renderGroupAnnotation(annotation: GroupAnnotation, model: Three.Object3
             boundingBox.getCenter(center);
 
             return renderPoint(
-                annotation, handleOpacity, setAnnoId
+                annotation, handleOpacity, setAnnoId, annoMaterial, annoId
             //     {
             //     x: center.x,
             //     y: center.y,
@@ -371,9 +386,9 @@ function renderGroupAnnotation(annotation: GroupAnnotation, model: Three.Object3
     );
 }
 
-function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3D, handleOpacity: Function, setAnnoId: Function): JSX.Element | undefined {
+function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3D, handleOpacity: Function, setAnnoId: Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element | undefined {
     return visitAnnotationData<JSX.Element | undefined>(annotation.data, {
-        basic: () => renderPoint(annotation, handleOpacity, setAnnoId),
+        basic: () => renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId),
         heatmap: (heatmap) => {
             // NOTE: This was my attempt at rendering heatmaps. The strategy was to color the vertices of the mesh based on how far
             // away it was from the center of the annotation, but it's not a great solution since it's hard to "un-color" the vertices
@@ -382,7 +397,7 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
 
             const mesh = model.children.find((c): c is Three.Mesh => c instanceof Three.Mesh);
             if (mesh === undefined) {
-                return renderPoint(annotation, handleOpacity, setAnnoId);
+                return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
             }
             const colorList = new Float32Array(mesh.geometry.attributes.color.array);
             const geometryPositionsArray = Array.from(mesh.geometry.getAttribute("position").array);
@@ -412,14 +427,14 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
             const colorsAttribute = new Three.BufferAttribute(colorList, 3);
             mesh.geometry.setAttribute("color", colorsAttribute);
             mesh.geometry.attributes.color.needsUpdate = true;
-            return renderPoint(annotation, handleOpacity, setAnnoId);
+            return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
         },
         unknown: () => undefined,
     });
 }
 
 // Just renders a sphere
-function renderPoint(annotation: Annotation, handleOpacity: Function, setAnnoId:Function): JSX.Element {
+function renderPoint(annotation: Annotation, handleOpacity: Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element {
     const onMouseOverAnnotaion = () => {
         handleOpacity(0.6);
         setAnnoId(annotation.id);
@@ -433,12 +448,12 @@ function renderPoint(annotation: Annotation, handleOpacity: Function, setAnnoId:
             onPointerOver={onMouseOverAnnotaion}
             onPointerLeave={onMouseLeaveAnnotaion}
             geometry={SPHERE_GEOMETRY}
-            material={MESH_MATERIAL}
+            material={annoId === annotation.id?annoMaterial: MESH_MATERIAL}
             position={convertToThreeJSVector(annotation.location)}
         />
     );
 }
-
+//just render html component
 function renderSprite(annotation: Annotation, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 60, annoId: number ):JSX.Element | undefined {
     if (annotation === undefined) return;
     // if(!annoId)opacity = 0;
