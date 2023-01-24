@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 
 import { Annotation } from "@external-lib";
 import { Select, Button, Form, Input, Checkbox } from "antd";
-import { PlusOutlined, EditFilled, DeleteFilled, AudioOutlined } from "@ant-design/icons";
+import { PlusOutlined, EditFilled, DeleteFilled } from "@ant-design/icons";
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 const { Search } = Input;
@@ -60,6 +60,12 @@ interface AnnotationControllerProps{
     changeSearch: (value: string) => void;
 
     /**
+     * Called when show all is clicked.
+     * @param value string
+     */
+    checkAllChange: (checked: boolean) => void;
+
+    /**
      * The list of annotations buffers for the given model.
      */
     annotations: Annotation[];
@@ -78,12 +84,20 @@ export function AnnotationBar({
     selectAnnotationControl,
     updateControlStatus,
     changeSearch,
+    checkAllChange,
     annotations,
     controlStatus
 }: AnnotationControllerProps) {
     const [form] = Form.useForm();
-    const [indeterminate, setIndeterminate] = React.useState(true);
-    const [checkAll, setCheckAll] = React.useState(false);
+    const [checkAll, setCheckAll] = React.useState(true);
+
+    const [isChecked, setIsChecked] = React.useState([] as boolean[]);
+
+    React.useEffect(() => {
+        const checkArray = annotations.map((a) => a.display)
+        setIsChecked(checkArray);
+        setCheckAll(annotations.filter(a => a.display).length === annotations.length);
+    }, [annotations]);
 
     const handleCancelClick = (ev: React.MouseEvent, key: string) => {
         ev.preventDefault();
@@ -127,7 +141,7 @@ export function AnnotationBar({
 
     const handleListClick = (ev: React.MouseEvent, annotation: Annotation) => {
         ev.preventDefault();
-        selectAnnotationControl(annotation);
+        // selectAnnotationControl(annotation);
     }
 
     const onSearch = (value: string) => {
@@ -135,9 +149,17 @@ export function AnnotationBar({
     };
 
     const onCheckAllChange = (e: CheckboxChangeEvent) => {
-        setIndeterminate(false);
+        checkAllChange(e.target.checked);
         setCheckAll(e.target.checked);
     }
+
+    const onCheckAnnotation = (checked: boolean, annotation: Annotation, index: number) => {
+        if (checked) {
+            selectAnnotationControl(annotation);
+        }
+
+        updateAnnotation(Object.assign({...annotation}, {display: checked}))
+    };
 
     return (
         <div style={{
@@ -199,8 +221,13 @@ export function AnnotationBar({
                             </Form.Item>
                         </Form> : ''
                 }
+                <div style={{margin: '0 10px', textAlign: 'left'}}>
+                    <Checkbox onChange={onCheckAllChange} checked={checkAll} style={{color: 'white'}}>
+                        show all
+                    </Checkbox>
+                </div>
                 {
-                    annotations.map(a => {
+                    annotations.map((a, i) => {
                         if (controlStatus === ('edit' + a.id)) {
                             return (
                                 <Form
@@ -230,13 +257,15 @@ export function AnnotationBar({
                         } else {
                             return (
                                 <Card className="annotation-list" style={{background: '#afafaf', margin: 5, textAlign: 'left'}} onClick={(ev: React.MouseEvent) => {handleListClick(ev, a)}}>
-                                    <CardContent style={{padding: '5px 15px 0px 15px'}}>
-                                        <Typography gutterBottom variant="h5" component="h5" style={{marginBottom: '0px', fontSize: '15px'}}>
-                                            {a.title}
-                                        </Typography>
-                                        <Typography variant="body2" color="textSecondary" component="p" style={{marginBottom: '0px', fontSize: '12px'}}>
-                                            {a.description}
-                                        </Typography>
+                                    <CardContent style={{padding: '0 5px'}}>
+                                        <Checkbox onChange={(ev: CheckboxChangeEvent) => {onCheckAnnotation(ev.target.checked, a, i)}} checked={isChecked[i]} style={{color: 'white'}}>
+                                            <Typography gutterBottom variant="h5" component="h5" style={{marginBottom: '0px', fontSize: '15px'}}>
+                                                {a.title}
+                                            </Typography>
+                                            <Typography variant="body2" color="textSecondary" component="p" style={{marginBottom: '0px', fontSize: '12px', color: 'white'}}>
+                                                {a.description}
+                                            </Typography>
+                                        </Checkbox>
                                     </CardContent>
                                     <CardActions disableSpacing style={{textAlign: "right", padding: '3px', display: 'block'}}>
                                         <Button icon={<EditFilled />} onClick={(ev: React.MouseEvent) => {handleEditClick(ev, a)}} />

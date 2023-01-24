@@ -72,7 +72,7 @@ export function AppLayout({
 
     const updateAnnotation = (annotation: Annotation) => {
         let _annotations = [...annotations];
-        _annotations.map(a => {
+        _annotations = _annotations.map(a => {
             return (a.id === annotation.id) ? annotation : a;
         });
         setAnnotations([] as Annotation[]);
@@ -99,10 +99,15 @@ export function AppLayout({
         setSearch(value);
 
         const viewAnnotation = annotations.filter(a => a.title === value);
-        if (viewAnnotation.length === 1) {
-            console.log('ddd');
+        if (viewAnnotation.length === 1 && viewAnnotation[0].display) {
             selectAnnotationControl(viewAnnotation[0]);
         }
+    }
+
+    const checkAllChange = (checked: boolean) => {
+        let _annotations = [...annotations];
+        _annotations = _annotations.map(a => Object.assign({...a}, {display: checked}));
+        setAnnotations(_annotations);
     }
 
     return (
@@ -116,12 +121,13 @@ export function AppLayout({
                 annotations = {annotations.filter(a => (a.type === annotationType && a.title && (!search || a.title === search)))}
                 controlStatus = {controlStatus}
                 selectAnnotationControl = {selectAnnotationControl}
+                checkAllChange = {checkAllChange}
                 changeSearch = {changeSearch}
             />
             <Visualizer
                 disableInteractions={false}
                 model = {model}
-                annotations = {annotations.filter(a => a.type === annotationType && (!search || a.title === search))}
+                annotations = {annotations.filter(a => a.type === annotationType && (!search || a.title === search) && a.display)}
                 layerDepth = {1}
                 annotationType = {annotationType}
                 onReady = {() => {}}
