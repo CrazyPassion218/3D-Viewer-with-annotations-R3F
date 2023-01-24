@@ -111,41 +111,44 @@ export function Visualizer({
     selectAnnotation,
     selectedAnnotation
 }: VisualizerProps) {
-    const [state, setState] = React.useState<VisualizerState>();
-    const [spriteOpacity, setSpriteOpacity] = React.useState<number>(0);
-    const [annoId, setAnnoId] = React.useState<number>(0);
-    const [annoMaterial, setAnnoMaterial] = React.useState<Three.MeshLambertMaterial>(MESH_MATERIAL);
-    // TODO use `layerDepth` to show the various layers of an object
-    // compute the box that contains all the stuff in the model
     const modelBoundingBox = new Three.Box3().setFromObject(model);
     const modelBoundingBoxSize = modelBoundingBox.getSize(new Three.Vector3()).length();
     const modelBoundingBoxCenter = modelBoundingBox.getCenter(new Three.Vector3());
 
+    const [state, setState] = React.useState<VisualizerState>();
+    const [hasEvent, setHasEvent] = React.useState<boolean>(true);
+    const [orbitControlTarget, setOrbitControlTarget] = React.useState<Three.Vector3>(modelBoundingBoxCenter);
+    const [spriteOpacity, setSpriteOpacity] = React.useState<number>(0);
+    const [annoId, setAnnoId] = React.useState<number>(1);
+    const [annoMaterial, setAnnoMaterial] = React.useState<Three.MeshLambertMaterial>(MESH_MATERIAL);
+    // TODO use `layerDepth` to show the various layers of an object
+    // compute the box that contains all the stuff in the model
+    
+
     React.useEffect(
         () => {
             if (selectedAnnotation) {
+                //here, differ color of selected annotation
                 setAnnoId(selectedAnnotation.id);
                 setAnnoMaterial(new Three.MeshLambertMaterial({
-                    emissive: new Three.Color('#ffo'),
-                    emissiveIntensity: 1,
+                    emissive: new Three.Color('#fff'),
+                    emissiveIntensity: 0.45,
                 }))
-                // const directVec = selectedAnnotation.face.normal;
-                //
-                // const distance = 7;
-                // let cameraCurrent = state?.camera;
-                // let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
-                // console.log(objectPosition);
-                // const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
-                // console.log(newPosition);
-                // cameraCurrent?.position?.set(newPosition.x, newPosition.y, newPosition.z);
-                // cameraCurrent?.lookAt(objectPosition);
-                // cameraCurrent?.updateProjectionMatrix();
-                // state?.renderer.setAnimationLoop(() => {
-                //     // if()
-                //     cameraCurrent?.lookAt(objectPosition);
-                //     cameraCurrent?.position.lerp(newPosition, 0.05);
-                //     cameraCurrent?.updateProjectionMatrix();
-                // })
+                
+                if(selectedAnnotation.face){
+                    //here, camera focus on selected annotation. (this code is right but not fianal, and when we control camera scheme, this should be edited.)
+                    const directVec = selectedAnnotation.face.normal;
+                    const distance = 5;
+                    let cameraCurrent = state?.camera;
+                    let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
+                    setOrbitControlTarget(objectPosition);
+                    const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
+                    state?.renderer.setAnimationLoop(() => {
+                        cameraCurrent?.lookAt(objectPosition);
+                        cameraCurrent?.position.lerp(newPosition, 0.02);
+                        cameraCurrent?.updateProjectionMatrix();
+                    })
+                }
             }
         },[selectedAnnotation]
     )
@@ -155,7 +158,6 @@ export function Visualizer({
             if (state === undefined) {
                 return undefined;
             }
-
             state.raycaster.setFromCamera(
                 {
                     x: (event.clientX / state.renderer.domElement.clientWidth) * 2 - 1,
@@ -203,11 +205,11 @@ export function Visualizer({
 
     const handleClick = React.useCallback(
         (ev: React.MouseEvent) => {
+            state?.renderer.setAnimationLoop(null);
             const clickContext = getClickContext(ev);
             if (disableInteractions || clickContext === undefined || clickContext.intersections.length === 0) {
                 return;
             }
-
             const { intersections/*, camera, renderer*/ } = clickContext;
             switch (annotationType) {
                 case 'point':
@@ -241,7 +243,6 @@ export function Visualizer({
                 default:
                     break;
             }
-
             onClick(disableInteractions);
     }, [getClickContext, disableInteractions, onClick]);
 
@@ -285,7 +286,7 @@ export function Visualizer({
             <directionalLight color={0xffffff} intensity={1} position={LIGHT_POSITION} />
             <OrbitControls
                 enabled={!disableInteractions}
-                enableDamping={false}
+                enableDamping={true}
                 enablePan={true}
                 maxDistance={modelBoundingBoxSize * 10}
                 maxZoom={ORBIT_CONTROLS_SETTINGS.maxZoom}
@@ -295,7 +296,7 @@ export function Visualizer({
                     MIDDLE: undefined,
                     RIGHT: undefined,
                 }}
-                target={modelBoundingBoxCenter}
+                target={orbitControlTarget}
             />
             <primitive object={model}/>
             {annotations.map((annotation) =>
@@ -330,7 +331,6 @@ function renderAreaAnnotation(annotation: AreaAnnotation, model: Three.Object3D,
         let count = mesh.geometry.attributes.position.count;
         mesh.geometry.setAttribute( 'color', new Three.BufferAttribute( new Float32Array( count * 3 ), 3 ) );
     };   
-    console.log(mesh);
     const colorList = new Float32Array(mesh.geometry.attributes.color.array);
     const geometryPositionsArray = Array.from(mesh.geometry.getAttribute("position").array);
     const vertex = new Three.Vector3();
@@ -432,7 +432,7 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
     });
 }
 
-// Just renders a sphere
+// Just renders a sphere as annotation
 function renderPoint(annotation: Annotation, handleOpacity: Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element {
     const onMouseOverAnnotaion = () => {
         handleOpacity(0.6);
@@ -452,7 +452,7 @@ function renderPoint(annotation: Annotation, handleOpacity: Function, setAnnoId:
         />
     );
 }
-//just render html component
+//just render html component as sprite
 function renderSprite(annotation: Annotation, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 60, annoId: number ):JSX.Element | undefined {
     if (annotation === undefined) return;
     // if(!annoId)opacity = 0;
@@ -467,7 +467,7 @@ function Dodecahedron({ ...props }) {
 return (
     <mesh {...props}>
     <Html distanceFactor={10}>
-        <div style={{paddingTop : '12px', width: props.title.length * 11 + 'px', textAlign: 'left', background: 'rgba(2,2,2,0.8)', color: 'white', padding: '10px 5px',  borderRadius: '5px', opacity: props.opacity}}>
+        <div style={{paddingTop : '12px', width: props.title.length * 13 + 'px', textAlign: 'left', background: 'rgba(2,2,2,0.8)', color: 'white', padding: '10px 5px',  borderRadius: '5px', opacity: props.opacity}}>
         <h4 style={{padding: '0', margin: '0', color: 'red'}}>{props.title}</h4>
         <p style={{padding: '0', margin: '0', fontSize: '10px '}}>{props.description}</p>
         </div>
