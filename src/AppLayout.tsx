@@ -91,16 +91,34 @@ export function AppLayout({
         setControlStatus(s)
     }
 
-    const selectAnnotationControl = (annotation: Annotation) => {
-        setSelectedAnnotation(annotation);
+    const selectAnnotationControl = (annotation: Annotation, key: string) => {
+        if (key === 'select') {
+            let _annotations = [...annotations];
+            _annotations = _annotations.map(a => {
+                if (a.id === annotation.id) {
+                    a.select = true;
+                } else {
+                    a.select = false;
+                }
+                return a;
+            });
+
+            setAnnotations(_annotations);
+            setSelectedAnnotation(annotation);
+        }
+        else {
+            updateAnnotation(Object.assign({...annotation}, {select: false}));
+            setSelectedAnnotation({} as Annotation);
+        }
     }
 
     const changeSearch = (value: string) => {
         setSearch(value);
 
-        const viewAnnotation = annotations.filter(a => a.title === value);
+        const viewAnnotation = annotations.filter(a => a.title.indexOf(value) === 0);
         if (viewAnnotation.length === 1 && viewAnnotation[0].display) {
-            selectAnnotationControl(viewAnnotation[0]);
+            updateAnnotation(Object.assign({...viewAnnotation[0]}, {select: true}));
+            setSelectedAnnotation(viewAnnotation[0]);
         }
     }
 
@@ -118,7 +136,7 @@ export function AppLayout({
                 removeAnnotation = {removeAnnotation}
                 updateAnnotationType = {updateAnnotationType}
                 updateControlStatus = {updateControlStatus}
-                annotations = {annotations.filter(a => (a.type === annotationType && a.title && (!search || a.title === search)))}
+                annotations = {annotations.filter(a => (a.type === annotationType && a.title && (!search || a.title.indexOf(search) === 0)))}
                 controlStatus = {controlStatus}
                 selectAnnotationControl = {selectAnnotationControl}
                 checkAllChange = {checkAllChange}
@@ -127,7 +145,7 @@ export function AppLayout({
             <Visualizer
                 disableInteractions={false}
                 model = {model}
-                annotations = {annotations.filter(a => a.type === annotationType && (!search || a.title === search) && a.display)}
+                annotations = {annotations.filter(a => a.type === annotationType && (!search || a.title.indexOf(search) === 0) && a.display)}
                 layerDepth = {1}
                 annotationType = {annotationType}
                 onReady = {() => {}}

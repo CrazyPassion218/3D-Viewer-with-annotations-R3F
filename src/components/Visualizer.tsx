@@ -223,7 +223,8 @@ export function Visualizer({
                         data: {
                             type: 'basic'
                         },
-                        display: true
+                        display: true,
+                        select: false
                     } as PointAnnotation);
                     break;
                 case 'area':
