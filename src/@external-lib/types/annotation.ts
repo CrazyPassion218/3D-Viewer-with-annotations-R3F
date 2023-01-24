@@ -29,9 +29,17 @@ interface CommonAnnotationProps {
      */
     face: SimpleFaceWithNormal,
     /**
-     * stored annotation hex color
+     * stored annotation material
      */
-    material: Three.MeshLambertMaterial
+    material: Three.MeshLambertMaterial,
+    /**
+     * option that is displayed on model
+     */
+    display: boolean,
+    /**
+     * option that is selected by user
+     */
+    select: boolean,
 }
 
 /**
