@@ -331,7 +331,7 @@ function renderAreaAnnotation(annotation: AreaAnnotation, model: Three.Object3D,
     if(!mesh.geometry.attributes.color){	    
         let count = mesh.geometry.attributes.position.count;
         mesh.geometry.setAttribute( 'color', new Three.BufferAttribute( new Float32Array( count * 3 ), 3 ) );
-    };   
+    }
     const colorList = new Float32Array(mesh.geometry.attributes.color.array);
     const geometryPositionsArray = Array.from(mesh.geometry.getAttribute("position").array);
     const vertex = new Three.Vector3();
@@ -380,7 +380,7 @@ function renderGroupAnnotation(annotation: GroupAnnotation, model: Three.Object3
             //     z: boundingBox.max.z, // wip(3d) find a better way to stick this on the surface of the model
             //     normal: { x: 0, y: 0, z: 0 },
             // }
-            
+
             );
         })
     );
@@ -443,6 +443,10 @@ function renderPoint(annotation: Annotation, handleOpacity: Function, setAnnoId:
         handleOpacity(0);
         setAnnoId(0);
     }
+
+    let key = 0;
+    if (annotation.id) key = annotation.id;
+
     return (
         <mesh
             onPointerOver={onMouseOverAnnotaion}
@@ -450,29 +454,32 @@ function renderPoint(annotation: Annotation, handleOpacity: Function, setAnnoId:
             geometry={SPHERE_GEOMETRY}
             material={annoId === annotation.id?annoMaterial: MESH_MATERIAL}
             position={convertToThreeJSVector(annotation.location)}
+            key={key}
         />
     );
 }
 //just render html component as sprite
 function renderSprite(annotation: Annotation, position: SimpleVectorWithNormal, opacity: number, color = 'red', fontSize = 60, annoId: number ):JSX.Element | undefined {
     if (annotation === undefined) return;
-    // if(!annoId)opacity = 0;
-    if(annoId !== annotation.id)opacity = 0;
-    if(annotation.title === undefined) return;
-    // let children = annotation.title;
+    if (annoId !== annotation.id) opacity = 0;
+    if (annotation.title === undefined) return;
+
+    let key = 0;
+    if (annotation.id) key = annotation.id;
+
     return (
-        <Dodecahedron position={[annotation.location.x, annotation.location.y, annotation.location.z]} opacity={opacity} title={annotation.title} description={annotation.description}/>
+        <Dodecahedron position={[annotation.location.x, annotation.location.y, annotation.location.z]} opacity={opacity} title={annotation.title} description={annotation.description} key={key}/>
     )
 }
 function Dodecahedron({ ...props }) {
-return (
-    <mesh {...props}>
-    <Html distanceFactor={10}>
-        <div style={{paddingTop : '12px', width: props.title.length * 13 + 'px', textAlign: 'left', background: 'rgba(2,2,2,0.8)', color: 'white', padding: '10px 5px',  borderRadius: '5px', opacity: props.opacity}}>
-        <h4 style={{padding: '0', margin: '0', color: 'red'}}>{props.title}</h4>
-        <p style={{padding: '0', margin: '0', fontSize: '10px '}}>{props.description}</p>
-        </div>
-    </Html>
-    </mesh>
-)
+    return (
+        <mesh {...props}>
+            <Html distanceFactor={10}>
+                <div style={{paddingTop : '12px', width: props.title.length * 13 + 'px', textAlign: 'left', background: 'rgba(2,2,2,0.8)', color: 'white', padding: '10px 5px',  borderRadius: '5px', opacity: props.opacity}}>
+                <h4 style={{padding: '0', margin: '0', color: 'red'}}>{props.title}</h4>
+                <p style={{padding: '0', margin: '0', fontSize: '10px '}}>{props.description}</p>
+                </div>
+            </Html>
+        </mesh>
+    )
 }
