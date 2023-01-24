@@ -18,5 +18,5 @@ export const SPHERE_GEOMETRY = new Three.SphereGeometry(0.1);
 
 export const MESH_MATERIAL = new Three.MeshLambertMaterial({
     emissive: new Three.Color(POINT_ANNOTATION_COLOR),
-    emissiveIntensity: 0.25,
+    emissiveIntensity: 0.8,
 });
