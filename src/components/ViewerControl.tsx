@@ -2,18 +2,22 @@ import React from 'react';
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
-import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
-import { Grid, Paper, TextField } from "@mui/material";
 import { Annotation } from "@external-lib";
+import { Select, Button, Form, Input } from "antd";
+import { PlusOutlined, EditFilled, DeleteFilled } from "@ant-design/icons";
+
+const validateMessages = {
+    required: '${label} is required!',
+};
 
 interface AnnotationControllerProps{
     /**
      * Called when annotation type is changed.
      * @param event React Select Change Event
      */
-    updateAnnotationType: (event: React.FormEvent) => void;
+    updateAnnotationType: (value: string) => void;
 
     /**
      * Called when annotation is added.
@@ -25,14 +29,14 @@ interface AnnotationControllerProps{
      * Called when annotation is removed.
      * @param id AnnotationBuffer id String
      */
-    removeAnnotation: (id: number) => void;
+    removeAnnotation: (annotation: Annotation) => void;
 
     /**
      * Called when annotation is updated.
      * @param id AnnotationBuffer id String
      * @param a AnnotationBuffer Interface
      */
-    updateAnnotation: (id: number, a: Annotation) => void;
+    updateAnnotation: (annotation: Annotation) => void;
 
     /**
      * Called when current control view status is changed.
@@ -44,7 +48,7 @@ interface AnnotationControllerProps{
      * Called when annotation list is clicked.
      * @param id number
      */
-    selectAnnotationId: (id: number) => void;
+    selectAnnotationControl: (a: Annotation) => void;
 
     /**
      * The list of annotations buffers for the given model.
@@ -62,26 +66,18 @@ export function ViewerControl({
     insertAnnotation,
     updateAnnotation,
     removeAnnotation,
-    selectAnnotationId,
+    selectAnnotationControl,
     updateControlStatus,
     annotations,
     controlStatus
 }: AnnotationControllerProps) {
-    const [title, setTitle] = React.useState('' as string);
-    const [description, setDescription] = React.useState('' as string);
-
-    React.useEffect(() => {
-        if (controlStatus === 'normal') {
-            setTitle('');
-            setDescription('');
-        }
-    }, [controlStatus]);
+    const [form] = Form.useForm();
 
     const handleCancelClick = (ev: React.MouseEvent, key: string) => {
         ev.preventDefault();
 
         if (key === 'add') {
-            removeAnnotation(0);
+            removeAnnotation({} as Annotation);
         }
 
         updateControlStatus("normal");
@@ -93,149 +89,123 @@ export function ViewerControl({
         updateControlStatus("annotation");
     }
 
-    const handleSaveClick = (ev: React.MouseEvent) => {
-        ev.preventDefault();
-
-        if (!title) {
-            alert('Please input the title!');
-            return;
-        } else if (!description) {
-            alert('Please input the description!');
-            return;
-        }
-
-        insertAnnotation(title, description);
+    const handleSaveClick = (values: any) => {
+        insertAnnotation(values.title, values.description);
     }
 
-    const handleChangeClick = (ev: React.MouseEvent, id: number) => {
-        ev.preventDefault();
+    const handleChangeClick = (values: any, annotation: Annotation) => {
+        annotation.title = values.title;
+        annotation.description = values.description;
 
-        if (!title) {
-            alert('Please input the title!');
-            return;
-        } else if (!description) {
-            alert('Please input the description!');
-            return;
-        }
-
-        const a = annotations.filter(a => a.id === id);
-        let _a = a[0];
-        _a.title = title;
-        _a.description = description;
-
-        updateAnnotation(id, _a);
+        updateAnnotation(annotation);
     }
 
-    const handleDeleteClick = (ev: React.MouseEvent, id: number) => {
+    const handleDeleteClick = (ev: React.MouseEvent, annotation: Annotation) => {
         ev.preventDefault();
 
-        removeAnnotation(id);
+        removeAnnotation(annotation);
     }
 
-    const handleEditClick = (ev: React.MouseEvent, id: number) => {
+    const handleEditClick = (ev: React.MouseEvent, annotation: Annotation) => {
         ev.preventDefault();
 
-        const a = annotations.filter(a => a.id === id);
-        setTitle(a[0].title);
-        setDescription(a[0].description);
-        updateControlStatus('edit' + id);
+        form.setFieldsValue({ title: annotation.title, description: annotation.description });
+        updateControlStatus('edit' + annotation.id);
     }
 
-    const handleTitleChange = (ev: React.ChangeEvent) => {
+    const handleListClick = (ev: React.MouseEvent, annotation: Annotation) => {
         ev.preventDefault();
-        setTitle(((ev.target) as any).value);
-    }
-
-    const handleDescriptionChange = (ev: React.ChangeEvent) => {
-        ev.preventDefault();
-        setDescription(((ev.target) as any).value);
-    }
-
-    const handleListClick = (ev: React.MouseEvent, id: number) => {
-        ev.preventDefault();
-        selectAnnotationId(id);
+        selectAnnotationControl(annotation);
     }
 
     return (
         <div style={{
-            'border': '1px dark solid',
-            'position': "absolute",
-            'width': "250px",
-            'top': "10%",
-            'right': "5%",
-            'zIndex': "10000",}}>
-            <center>
-                <p>Select the type of annotation</p>
-                <select
-                    style={{'height': '35px', 'width': '140px', 'marginRight': '10px'}}
-                    className="form-control"
-                    id="searchType"
-                    onChange={ updateAnnotationType }>
-                    <option value="point">Point</option>
-                    <option value="area">Area</option>
-                    <option value="group" disabled>Group</option>
-                    <option value="path" disabled>Path</option>
-                </select>
-                {
-                    controlStatus !== 'normal'? <Button color="primary" variant="contained" disabled> Add </Button> : <Button color="primary" variant="contained" onClick={handleAddClick}> Add </Button>
-                }
-                {
-                    controlStatus === 'annotation' ?
-                        <Grid item xs={12} sm={12} md={12}>
-                            <Typography gutterBottom color="red" fontSize="0.9em">
-                                *Please select annotation.
-                            </Typography>
-                        </Grid> : ''
-                }
-            </center>
+            border: '1px dark solid',
+            position: "absolute",
+            textAlign: 'center',
+            width: "250px",
+            top: "10%",
+            right: "5%",
+            zIndex: 100,
+            background: '#6e7377'
+        }}>
+            <p style={{color: 'white'}}>Select the type of annotation</p>
+            <Select
+                defaultValue="Point"
+                style={{ width: 120, marginRight: 10}}
+                onChange={updateAnnotationType}
+                options={[
+                    { value: 'point', label: 'Point' },
+                    { value: 'area', label: 'Area' },
+                    { value: 'group', label: 'group', disabled: true },
+                ]}
+            />
+            {
+                controlStatus !== 'normal'?
+                    <Button type="primary" shape="circle" icon={<PlusOutlined />} disabled></Button> :
+                    <Button type="primary" shape="circle" icon={<PlusOutlined />} onClick={handleAddClick}></Button>
+            }
             <div style={{marginTop: '10px', height: '450px', overflow: 'auto'}}>
                 {
+                    controlStatus === 'annotation' ?
+                        <p style={{color: 'red'}}>Please select annotation</p> : ''
+                }
+                {
                     controlStatus === 'add' ?
-                        <Grid item xs={12} sm={12} md={12} marginTop="5px">
-                            <Paper style={{background: '#b0b9e1'}}>
-                                <Grid item xs={12} padding="5px">
-                                    <input  placeholder="title" onChange={handleTitleChange} height="30px" value={title} style={{width: '98%', background: '#ffffff', height: '30px', fontSize: '15px', border: '1px solid #b0b9e1'}}></input>
-                                </Grid>
-                                <Grid item xs={12} padding="5px">
-                                    <input  placeholder="description" onChange={handleDescriptionChange} value={description} style={{width: '98%', background: '#ffffff', height: '30px', fontSize: '13px', border: '1px solid #b0b9e1'}}></input>
-                                </Grid>
-                                <Grid item xs={12} textAlign="right">
-                                    <Button size="small" color="primary" onClick={handleSaveClick}>
-                                        Save
-                                    </Button>
-                                    <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'add')}}>
-                                        Cancel
-                                    </Button>
-                                </Grid>
-                            </Paper>
-                        </Grid> : ''
+                        <Form
+                            layout="vertical"
+                            name="nest-messages"
+                            onFinish={handleSaveClick}
+                            style={{ maxWidth: 600, padding: 10, background: '#4b4f52', margin: 5, borderRadius: 5 }}
+                            validateMessages={validateMessages}
+                        >
+                            <Form.Item name="title" rules={[{ required: true }]} style={{marginBottom: 5}}>
+                                <Input placeholder="title" />
+                            </Form.Item>
+                            <Form.Item name="description" rules={[{ required: true }]} style={{marginBottom: 5}}>
+                                <Input.TextArea placeholder="description" />
+                            </Form.Item>
+                            <Form.Item style={{marginBottom: 0}}>
+                                <Button type="primary" htmlType="submit" style={{marginRight: 5}}>
+                                    Save
+                                </Button>
+                                <Button htmlType="button" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'add')}}>
+                                    Cancel
+                                </Button>
+                            </Form.Item>
+                        </Form> : ''
                 }
                 {
                     annotations.map(a => {
                         if (controlStatus === ('edit' + a.id)) {
                             return (
-                                <Grid item xs={12} sm={12} md={12} marginTop="2px">
-                                    <Paper style={{background: '#b0b9e1'}}>
-                                        <Grid item xs={12} padding="5px">
-                                            <input  placeholder="title" onChange={handleTitleChange} height="30px" value={title} style={{width: '98%', background: '#ffffff', height: '30px', fontSize: '15px', border: '1px solid #b0b9e1'}}></input>
-                                        </Grid>
-                                        <Grid item xs={12} padding="5px">
-                                            <input  placeholder="description" onChange={handleDescriptionChange} value={description} style={{width: '98%', background: '#ffffff', height: '30px', fontSize: '13px', border: '1px solid #b0b9e1'}}></input>
-                                        </Grid>
-                                        <Grid item xs={12} textAlign="right">
-                                            <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleChangeClick(ev, a.id)}}>
-                                                Change
-                                            </Button>
-                                            <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'change')}}>
-                                                Cancel
-                                            </Button>
-                                        </Grid>
-                                    </Paper>
-                                </Grid>
+                                <Form
+                                    layout="vertical"
+                                    name="nest-messages"
+                                    onFinish={(values: any) => {handleChangeClick(values, a)}}
+                                    style={{ maxWidth: 600, padding: 10, background: '#4b4f52', margin: 5, borderRadius: 5 }}
+                                    validateMessages={validateMessages}
+                                    form={form}
+                                >
+                                    <Form.Item name="title" rules={[{ required: true }]} style={{marginBottom: 5}}>
+                                        <Input placeholder="title" />
+                                    </Form.Item>
+                                    <Form.Item name="description" rules={[{ required: true }]} style={{marginBottom: 5}}>
+                                        <Input.TextArea placeholder="description" />
+                                    </Form.Item>
+                                    <Form.Item style={{marginBottom: 0}}>
+                                        <Button type="primary" htmlType="submit" style={{marginRight: 5}}>
+                                            Save
+                                        </Button>
+                                        <Button htmlType="button" onClick={(ev: React.MouseEvent) => {handleCancelClick(ev, 'change')}}>
+                                            Cancel
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
                             )
                         } else {
                             return (
-                                <Card className="annotation-list" style={{background: '#afafaf', marginTop: '2px'}} onClick={(ev: React.MouseEvent) => {handleListClick(ev, a.id)}}>
+                                <Card className="annotation-list" style={{background: '#afafaf', margin: 5, textAlign: 'left'}} onClick={(ev: React.MouseEvent) => {handleListClick(ev, a)}}>
                                     <CardContent style={{padding: '5px 15px 0px 15px'}}>
                                         <Typography gutterBottom variant="h5" component="h5" style={{marginBottom: '0px', fontSize: '15px'}}>
                                             {a.title}
@@ -245,12 +215,8 @@ export function ViewerControl({
                                         </Typography>
                                     </CardContent>
                                     <CardActions disableSpacing style={{textAlign: "right", padding: '3px', display: 'block'}}>
-                                        <Button size="small" color="primary" onClick={(ev: React.MouseEvent) => {handleEditClick(ev, a.id)}}>
-                                            Edit
-                                        </Button>
-                                        <Button size="small" color="secondary" onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a.id)}}>
-                                            Delete
-                                        </Button>
+                                        <Button icon={<EditFilled />} onClick={(ev: React.MouseEvent) => {handleEditClick(ev, a)}} />
+                                        <Button icon={<DeleteFilled />} onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a)}} />
                                     </CardActions>
                                 </Card>
                             )

@@ -88,7 +88,7 @@ interface VisualizerProps {
     /**
      * selected annotation id in the viewer controller.
      */
-    selectedAnnotationId: number;
+    selectedAnnotation: Annotation;
 }
 
 interface VisualizerState {
@@ -109,7 +109,7 @@ export function Visualizer({
     onClick,
     onRightClick,
     selectAnnotation,
-    selectedAnnotationId
+    selectedAnnotation
 }: VisualizerProps) {
     const [state, setState] = React.useState<VisualizerState>();
     const [spriteOpacity, setSpriteOpacity] = React.useState<number>(0);
@@ -120,14 +120,11 @@ export function Visualizer({
     const modelBoundingBox = new Three.Box3().setFromObject(model);
     const modelBoundingBoxSize = modelBoundingBox.getSize(new Three.Vector3()).length();
     const modelBoundingBoxCenter = modelBoundingBox.getCenter(new Three.Vector3());
-    const focuSelectedAnnotation = React.useEffect(
+
+    React.useEffect(
         () => {
-            const selectedAnnotation = annotations.filter(function (annotation){
-                return annotation.id === selectedAnnotationId;
-            })
-            if(selectedAnnotation.length !== 0){
-                console.log(selectedAnnotation[0].material);
-                setAnnoId(selectedAnnotation[0].id);
+            if (selectedAnnotation) {
+                setAnnoId(selectedAnnotation.id);
                 setAnnoMaterial(new Three.MeshLambertMaterial({
                     emissive: new Three.Color('#ffo'),
                     emissiveIntensity: 1,
@@ -150,8 +147,9 @@ export function Visualizer({
                 //     cameraCurrent?.updateProjectionMatrix();
                 // })
             }
-        },[selectedAnnotationId]
+        },[selectedAnnotation]
     )
+
     const getClickContext = React.useCallback(
         (event: React.MouseEvent) => {
             if (state === undefined) {

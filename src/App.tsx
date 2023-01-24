@@ -5,14 +5,13 @@ import { useLoader } from '@react-three/fiber'
 import { Visualizer } from './components/Visualizer'
 import { ViewerControl } from './components/ViewerControl'
 import { Annotation } from "@external-lib";
-import { ObjectLoader } from "three";
 
 function App() {
     const [annotations, setAnnotations] = React.useState([] as Annotation[]);
     const [currentAnnotation, setCurrentAnnotation] = React.useState({} as Annotation);
     const [annotationType, setAnnotationType] = React.useState('point' as string);
     const [controlStatus, setControlStatus] = React.useState('normal' as string);
-    const [selectedAnnotationId, setSelectedAnnotationId] = React.useState(0 as number);
+    const [selectedAnnotation, setSelectedAnnotation] = React.useState({} as Annotation);
 
     const obj = useLoader(OBJLoader, 'human_model.obj');
 
@@ -44,29 +43,30 @@ function App() {
             alert('Please select point annotation!');
             return;
         }
+
         let annotation = currentAnnotation;
         annotation.title = title;
         annotation.description = description;
-        updateAnnotation(annotation.id, annotation);
+        updateAnnotation(annotation);
         setControlStatus('normal');
     }
 
-    const removeAnnotation = (id: number) => {
+    const removeAnnotation = (annotation: Annotation) => {
         let _annotations = [...annotations];
 
         setAnnotations([] as Annotation[]);
         setTimeout(function() {
-            if (id === 0) setAnnotations(_annotations.filter(a => a.id !== currentAnnotation.id));
-            else setAnnotations(_annotations.filter(a => a.id !== id));
+            if (annotation === {} as Annotation) setAnnotations(_annotations.filter(a => a.id !== currentAnnotation.id));
+            else setAnnotations(_annotations.filter(a => a.id !== annotation.id));
         }, 100);
 
         setControlStatus('normal');
     }
 
-    const updateAnnotation = (id: number, a: Annotation) => {
+    const updateAnnotation = (annotation: Annotation) => {
         let _annotations = [...annotations];
-        _annotations.map(_a => {
-            return (_a.id === id) ? a : _a;
+        _annotations.map(a => {
+            return (a.id === annotation.id) ? annotation : a;
         });
         setAnnotations([] as Annotation[]);
         setTimeout(function() {
@@ -76,17 +76,16 @@ function App() {
         setControlStatus('normal');
     }
 
-    const updateAnnotationType = (event: React.FormEvent) => {
-        let type = ((event.target) as any).value;
-        setAnnotationType(type)
+    const updateAnnotationType = (value: string) => {
+        setAnnotationType(value)
     }
 
     const updateControlStatus = (s: string) => {
         setControlStatus(s)
     }
 
-    const selectAnnotationId = (id: number) => {
-        setSelectedAnnotationId(id);
+    const selectAnnotationControl = (annotation: Annotation) => {
+        setSelectedAnnotation(annotation);
     }
 
     return (
@@ -97,9 +96,9 @@ function App() {
                 removeAnnotation = {removeAnnotation}
                 updateAnnotationType = {updateAnnotationType}
                 updateControlStatus = {updateControlStatus}
-                annotations = {annotations.filter(a => (a.type === annotationType && a.title))}
+                annotations = {annotations.filter(a => (a.type === annotationType && a.description))}
                 controlStatus = {controlStatus}
-                selectAnnotationId={selectAnnotationId}
+                selectAnnotationControl={selectAnnotationControl}
             />
             <Visualizer
                 disableInteractions={false}
@@ -111,7 +110,7 @@ function App() {
                 onClick = {()=>{}}
                 onRightClick = {() =>{}}
                 selectAnnotation = {selectAnnotation}
-                selectedAnnotationId = {selectedAnnotationId}
+                selectedAnnotation = {selectedAnnotation}
             />
         </div>
     );
