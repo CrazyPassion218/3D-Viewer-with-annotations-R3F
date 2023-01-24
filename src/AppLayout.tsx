@@ -13,18 +13,42 @@ interface AppLayoutProps {
 export function AppLayout({
     model
     }: AppLayoutProps) {
+    /**
+     * all annotations. This means virtual annotation database.
+     */
     const [annotations, setAnnotations] = React.useState([] as Annotation[]);
+    /**
+     * This means annotation set on the model by user.
+     */
     const [currentAnnotation, setCurrentAnnotation] = React.useState({} as Annotation);
+    /**
+     * This means annotation type set in the current time.
+     */
     const [annotationType, setAnnotationType] = React.useState('point' as string);
+    /**
+     * This means annotation control status.
+     */
     const [controlStatus, setControlStatus] = React.useState('normal' as string);
+    /**
+     * This means selected and unselected annotation control.
+     */
     const [selectedAnnotation, setSelectedAnnotation] = React.useState({} as Annotation);
+    /**
+     * This means search string input by user in the current time.
+     */
     const [search, setSearch] = React.useState('' as string);
 
+    /**
+     * useEffect function when call by following controlStatus and annotations's changing.
+     */
     React.useEffect(() => {
         if (controlStatus === 'normal')
             setCurrentAnnotation({} as Annotation);
     }, [controlStatus, annotations]);
 
+    /**
+     * useEffect function when call by following annotation type's changing.
+     */
     React.useEffect(() => {
         setAnnotations([] as Annotation[]);
         setTimeout(function() {
@@ -32,6 +56,11 @@ export function AppLayout({
         }, 100);
     }, [annotationType])
 
+    /**
+     * Called when user selected point annotation.
+     * @param a Annotation
+     * @returns
+     */
     const selectAnnotation = (a: Annotation) => {
         if (controlStatus === 'annotation') {
             const date = new Date();
@@ -43,6 +72,12 @@ export function AppLayout({
         }
     }
 
+    /**
+     * insert annotation by user.
+     * @param title string
+     * @param description string
+     * @returns
+     */
     const insertAnnotation = (title: string, description: string) => {
         if (!currentAnnotation.type) {
             alert('Please select point annotation!');
@@ -56,6 +91,11 @@ export function AppLayout({
         setControlStatus('normal');
     }
 
+    /**
+     * remove annotation by user.
+     * @param annotation Annotation
+     * @returns
+     */
     const removeAnnotation = (annotation: Annotation) => {
         let _annotations = [...annotations];
 
@@ -70,6 +110,11 @@ export function AppLayout({
         setControlStatus('normal');
     }
 
+    /**
+     * update annotation by user.
+     * @param annotation Annotation
+     * @returns
+     */
     const updateAnnotation = (annotation: Annotation) => {
         let _annotations = [...annotations];
         _annotations = _annotations.map(a => {
@@ -83,14 +128,30 @@ export function AppLayout({
         setControlStatus('normal');
     }
 
+    /**
+     * called when user changed annotation type.
+     * @param value string
+     * @returns
+     */
     const updateAnnotationType = (value: string) => {
         setAnnotationType(value)
     }
 
+    /**
+     * called when control status(normal, add, edit, delete) is changed.
+     * @param s string
+     * @returns
+     */
     const updateControlStatus = (s: string) => {
         setControlStatus(s)
     }
 
+    /**
+     * called when user selected and unselected annotation control.
+     * @param annotation Annotation
+     * @param key string
+     * @returns
+     */
     const selectAnnotationControl = (annotation: Annotation, key: string) => {
         if (key === 'select') {
             let _annotations = [...annotations];
@@ -112,6 +173,11 @@ export function AppLayout({
         }
     }
 
+    /**
+     * called when search string is changed.
+     * @param value string
+     * @returns
+     */
     const changeSearch = (value: string) => {
         setSearch(value);
 
@@ -122,6 +188,11 @@ export function AppLayout({
         }
     }
 
+    /**
+     * called when show all checkbox is checked.
+     * @param checked boolean
+     * @returns
+     */
     const checkAllChange = (checked: boolean) => {
         let _annotations = [...annotations];
         _annotations = _annotations.map(a => Object.assign({...a}, {display: checked}));
