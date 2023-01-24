@@ -2,7 +2,7 @@ import { isInRange, MAXIMUM_INTENSITY, MINIMUM_INTENSITY, IntensityValue } from 
 import { color as createColor, ColorHelper, rgb } from "csx/lib/color";
 import { findTween, getTween } from "../utils/tweenUtils";
 
-export const SCENE_BACKGROUND_COLOR = "#C1E2FE";
+export const SCENE_BACKGROUND_COLOR = "#7b89a2";
 export const DEFAULT_ANNOTATION_COLOR = "#fff";
 export const POINT_ANNOTATION_COLOR = "#f00";
 
