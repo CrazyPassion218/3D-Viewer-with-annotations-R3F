@@ -89,17 +89,31 @@ export function AnnotationBar({
     annotations,
     controlStatus
 }: AnnotationControllerProps) {
+    /**
+     * form using antd module.
+     */
     const [form] = Form.useForm();
+    /**
+     * showALl checked status(true, false)
+     */
     const [checkAll, setCheckAll] = React.useState(true);
-
+    /**
+     * check list by following each annotation(boolean array)
+     */
     const [isChecked, setIsChecked] = React.useState([] as boolean[]);
 
+    /**
+     * useEffect function when call by following props annotation's changing.
+     */
     React.useEffect(() => {
         const checkArray = annotations.map((a) => a.display)
         setIsChecked(checkArray);
         setCheckAll(annotations.filter(a => a.display).length === annotations.length);
     }, [annotations]);
 
+    /**
+     * call when add box's cancel buttton and edit box's cancel button click.
+     */
     const handleCancelClick = (ev: React.MouseEvent, key: string) => {
         ev.preventDefault();
 
@@ -110,16 +124,25 @@ export function AnnotationBar({
         updateControlStatus("normal");
     }
 
+    /**
+     * call when user clicks add buttton on add box
+     */
     const handleAddClick = (ev: React.MouseEvent) => {
         ev.preventDefault();
 
         updateControlStatus("annotation");
     }
 
+    /**
+     * submit call when user clicks save button to save annotation
+     */
     const handleSaveClick = (values: any) => {
         insertAnnotation(values.title, values.description);
     }
 
+    /**
+     * submit call when user clicks change button to update annotation
+     */
     const handleChangeClick = (values: any, annotation: Annotation) => {
         annotation.title = values.title;
         annotation.description = values.description;
@@ -127,12 +150,18 @@ export function AnnotationBar({
         updateAnnotation(annotation);
     }
 
+    /**
+     * submit call when user clicks delete button
+     */
     const handleDeleteClick = (ev: React.MouseEvent, annotation: Annotation) => {
         ev.preventDefault();
 
         removeAnnotation(annotation);
     }
 
+    /**
+     * link call when user clicks edit button
+     */
     const handleEditClick = (ev: React.MouseEvent, annotation: Annotation) => {
         ev.preventDefault();
 
@@ -140,21 +169,33 @@ export function AnnotationBar({
         updateControlStatus('edit' + annotation.id);
     }
 
+    /**
+     * call when user clicks annotation controller on annotation list
+     */
     const handleAnnotationClick = (ev: React.MouseEvent, annotation: Annotation, key: string) => {
         ev.preventDefault();
 
         selectAnnotationControl(annotation, key);
     }
 
+    /**
+     * call when user inputs on search bar
+     */
     const onSearch = (value: string) => {
         changeSearch(value);
     };
 
+    /**
+     * call when user clicks check all checked button
+     */
     const onCheckAllChange = (e: CheckboxChangeEvent) => {
         checkAllChange(e.target.checked);
         setCheckAll(e.target.checked);
     }
 
+    /**
+     * call when user checks each annotation controller on annotation list
+     */
     const onCheckAnnotation = (checked: boolean, annotation: Annotation, index: number) => {
         updateAnnotation(Object.assign({...annotation}, {display: checked}))
     };
