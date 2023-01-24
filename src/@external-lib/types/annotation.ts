@@ -1,6 +1,8 @@
+import { ThreeElements } from "@react-three/fiber";
 import { Vector3 } from "three";
 import { AnnotationData, AnnotationData_Heatmap } from "./annotationData";
 import { SimpleFaceWithNormal, SimpleVector3, SimpleVectorWithNormal } from "./vector";
+import * as Three from "three";
 
 export type Annotation = PointAnnotation | PathAnnotation | GroupAnnotation | AreaAnnotation;
 
@@ -10,10 +12,26 @@ interface CommonAnnotationProps {
      * Stored annotation data.
      */
     data: AnnotationData;
+    /**
+     * point vector.
+     */
     location: SimpleVectorWithNormal,
+    /**
+     * annotation title
+     */
     title: string,
+    /**
+     * annotation description
+     */
     description: string,
-    face: SimpleFaceWithNormal;
+    /**
+     * stored model face
+     */
+    face: SimpleFaceWithNormal,
+    /**
+     * stored annotation hex color
+     */
+    material: Three.MeshLambertMaterial
 }
 
 /**

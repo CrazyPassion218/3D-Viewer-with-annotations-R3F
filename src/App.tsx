@@ -32,7 +32,7 @@ function App() {
         if (controlStatus === 'annotation') {
             const date = new Date();
             a.id = date.valueOf();
-
+            
             setAnnotations([...annotations, a])
             setCurrentAnnotation(a);
             updateControlStatus('add');
@@ -47,7 +47,6 @@ function App() {
         let annotation = currentAnnotation;
         annotation.title = title;
         annotation.description = description;
-
         updateAnnotation(annotation.id, annotation);
         setControlStatus('normal');
     }
