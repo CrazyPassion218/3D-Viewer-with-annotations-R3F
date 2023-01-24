@@ -61,7 +61,7 @@ interface AnnotationControllerProps{
     controlStatus: string;
 }
 
-export function ViewerControl({
+export function AnnotationBar({
     updateAnnotationType,
     insertAnnotation,
     updateAnnotation,
