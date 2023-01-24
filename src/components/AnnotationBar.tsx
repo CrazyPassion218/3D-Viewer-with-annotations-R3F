@@ -220,7 +220,7 @@ export function AnnotationBar({
                     onChange={updateAnnotationType}
                     options={[
                         { value: 'point', label: 'Point' },
-                        { value: 'area', label: 'Area' },
+                        { value: 'area', label: 'Area', disabled: true  },
                         { value: 'group', label: 'group', disabled: true },
                     ]}
                 />
