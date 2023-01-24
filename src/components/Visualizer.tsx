@@ -110,31 +110,51 @@ export function Visualizer({
     selectAnnotation,
     selectedAnnotation
 }: VisualizerProps) {
+    /**
+     * For getting variables related to model.
+     */
     const modelBoundingBox = new Three.Box3().setFromObject(model);
     const modelBoundingBoxSize = modelBoundingBox.getSize(new Three.Vector3()).length();
     const modelBoundingBoxCenter = modelBoundingBox.getCenter(new Three.Vector3());
 
     const [state, setState] = React.useState<VisualizerState>();
+    /**
+     * state variable for orbitControl target
+     */
     const [orbitControlTarget, setOrbitControlTarget] = React.useState<Three.Vector3>(modelBoundingBoxCenter);
     const [enableOrbitCamera, setEnableOrbitCamera] = React.useState<boolean>(true);
+    /**
+     * opacity value for hide and show tooltip when user hover annotation.
+     */
     const [spriteOpacity, setSpriteOpacity] = React.useState<number>(0);
+    /**
+     * annotation Id and material 
+     */
     const [annoId, setAnnoId] = React.useState<number>(1);
     const [annoMaterial, setAnnoMaterial] = React.useState<Three.MeshLambertMaterial>(MESH_MATERIAL);
     // TODO use `layerDepth` to show the various layers of an object
     // compute the box that contains all the stuff in the model
     
+
+    /**
+     * useEffect function
+     */
     React.useEffect(
         () => {
             if (selectedAnnotation) {
-                //here, differ color of selected annotation
+                /**
+                 * change the color of annotation when user hover specific annotation
+                 */
                 setAnnoId(selectedAnnotation.id);
                 setAnnoMaterial(new Three.MeshLambertMaterial({
                     emissive: new Three.Color('#fff'),
                     emissiveIntensity: 0.45,
                 }))
+                /**
+                 * animate the camera and move for focusing currnet annotation when user click annotation bar
+                 */
                 if(selectedAnnotation.face){
                     setEnableOrbitCamera(false);
-                    //here, camera focus on selected annotation. (this code is right but not fianal, and when we control camera scheme, this should be edited.)
                     const directVec = selectedAnnotation.face.normal;
                     const distance = 5;
                     let cameraCurrent = state?.camera;
@@ -150,7 +170,9 @@ export function Visualizer({
             }
         },[selectedAnnotation]
     )
-
+    /**
+     * useCallback function to get point user clicked over model
+     */  
     const getClickContext = React.useCallback(
         (event: React.MouseEvent) => {
             if (state === undefined) {
@@ -174,7 +196,9 @@ export function Visualizer({
         },
         [model, state]
     );
-
+    /**
+     * useCallback function to set the initial setting for canvas
+     */
     const handleCanvasCreated = React.useCallback(
         (rootState: RootState) => {
             rootState.scene.background = new Three.Color(SCENE_BACKGROUND_COLOR);
@@ -200,16 +224,22 @@ export function Visualizer({
         },
         [model, modelBoundingBoxCenter, modelBoundingBoxSize, onReady]
     );
-
+    /**
+     * useCallback function to calculate various funcitons
+     */
     const handleClick = React.useCallback(
         (ev: React.MouseEvent) => {
+            //here, exit the camera animation
             state?.renderer.setAnimationLoop(null);
+            //here, use orbitcamera
             setEnableOrbitCamera(true);
+            //get the x,y,z position user clicked over model
             const clickContext = getClickContext(ev);
             if (disableInteractions || clickContext === undefined || clickContext.intersections.length === 0) {
                 return;
             }
             const { intersections/*, camera, renderer*/ } = clickContext;
+            //annotation filter
             switch (annotationType) {
                 case 'point':
                     selectAnnotation({
@@ -245,7 +275,9 @@ export function Visualizer({
             }
             onClick(disableInteractions);
     }, [getClickContext, disableInteractions, onClick]);
-
+    /**
+     * useCallback function occurs when right mouse button clicked
+     */
     const handleRightClick = React.useCallback(
         (ev: React.MouseEvent) => {
             const clickContext = getClickContext(ev);
@@ -266,10 +298,14 @@ export function Visualizer({
         [disableInteractions, getClickContext, onRightClick]
     );
 
+    /**
+     * useCallback function to set the annotation opacity
+     */
     const handleOpacity = React.useCallback((value: number) => 
     {
         setSpriteOpacity(value);
     },[spriteOpacity]);
+
     return (
         <Canvas
             onClick={handleClick}
@@ -321,7 +357,9 @@ export function Visualizer({
         </Canvas>
     );
 }
-
+/**
+ * rendre area annotation
+ */
 function renderAreaAnnotation(annotation: AreaAnnotation, model: Three.Object3D, handleOpacity:Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId: number): JSX.Element | undefined {
     const mesh = model.children.find((c): c is Three.Mesh => c instanceof Three.Mesh);
     if (mesh === undefined) {
@@ -353,7 +391,9 @@ function renderAreaAnnotation(annotation: AreaAnnotation, model: Three.Object3D,
     
     return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
 }
-
+/**
+ * render group annotation
+ */
 function renderGroupAnnotation(annotation: GroupAnnotation, model: Three.Object3D, handleOpacity: Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element[] {
     return compact(
         annotation.groupIds.map((group) => {
@@ -385,7 +425,9 @@ function renderGroupAnnotation(annotation: GroupAnnotation, model: Three.Object3
         })
     );
 }
-
+/**
+ * render point annotation
+ */
 function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3D, handleOpacity: Function, setAnnoId: Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element | undefined {
     return visitAnnotationData<JSX.Element | undefined>(annotation.data, {
         basic: () => renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId),
@@ -435,6 +477,7 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
 
 // Just renders a sphere as annotation
 function renderPoint(annotation: Annotation, handleOpacity: Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element {
+    //function to show or hide this annotation sprite
     const onMouseOverAnnotaion = () => {
         handleOpacity(0.6);
         setAnnoId(annotation.id);
