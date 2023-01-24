@@ -6,7 +6,7 @@ import Typography from "@mui/material/Typography";
 
 import { Annotation } from "@external-lib";
 import { Select, Button, Form, Input, Checkbox } from "antd";
-import { PlusOutlined, EditFilled, DeleteFilled } from "@ant-design/icons";
+import { PlusOutlined, EditFilled, DeleteFilled, EyeTwoTone, EyeInvisibleTwoTone } from "@ant-design/icons";
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 const { Search } = Input;
@@ -50,8 +50,9 @@ interface AnnotationControllerProps{
     /**
      * Called when annotation list is clicked.
      * @param id number
+     * @param key string(select, unselect)
      */
-    selectAnnotationControl: (a: Annotation) => void;
+    selectAnnotationControl: (a: Annotation, key: string) => void;
 
     /**
      * Called when search string is changed.
@@ -139,9 +140,10 @@ export function AnnotationBar({
         updateControlStatus('edit' + annotation.id);
     }
 
-    const handleListClick = (ev: React.MouseEvent, annotation: Annotation) => {
+    const handleAnnotationClick = (ev: React.MouseEvent, annotation: Annotation, key: string) => {
         ev.preventDefault();
-        // selectAnnotationControl(annotation);
+
+        selectAnnotationControl(annotation, key);
     }
 
     const onSearch = (value: string) => {
@@ -154,10 +156,6 @@ export function AnnotationBar({
     }
 
     const onCheckAnnotation = (checked: boolean, annotation: Annotation, index: number) => {
-        if (checked) {
-            selectAnnotationControl(annotation);
-        }
-
         updateAnnotation(Object.assign({...annotation}, {display: checked}))
     };
 
@@ -255,8 +253,9 @@ export function AnnotationBar({
                                 </Form>
                             )
                         } else {
+                            const bg = a.select ? '#8b8686': '#c3bfbf';
                             return (
-                                <Card className="annotation-list" style={{background: '#afafaf', margin: 5, textAlign: 'left'}} onClick={(ev: React.MouseEvent) => {handleListClick(ev, a)}}>
+                                <Card className="annotation-list" style={{background: bg, margin: 5, textAlign: 'left'}}>
                                     <CardContent style={{padding: '0 5px'}}>
                                         <Checkbox onChange={(ev: CheckboxChangeEvent) => {onCheckAnnotation(ev.target.checked, a, i)}} checked={isChecked[i]} style={{color: 'white'}}>
                                             <Typography gutterBottom variant="h5" component="h5" style={{marginBottom: '0px', fontSize: '15px'}}>
@@ -268,6 +267,14 @@ export function AnnotationBar({
                                         </Checkbox>
                                     </CardContent>
                                     <CardActions disableSpacing style={{textAlign: "right", padding: '3px', display: 'block'}}>
+                                        {
+                                            !a.select ?
+                                                a.display ?
+                                                    <Button icon={<EyeTwoTone />} onClick={(ev: React.MouseEvent) => {handleAnnotationClick(ev, a, 'select')}} /> :
+                                                    <Button icon={<EyeTwoTone />} disabled />
+                                                : a.display ? <Button icon={<EyeInvisibleTwoTone />} onClick={(ev: React.MouseEvent) => {handleAnnotationClick(ev, a, 'unselect')}} /> :
+                                                    <Button icon={<EyeInvisibleTwoTone />} disabled />
+                                        }
                                         <Button icon={<EditFilled />} onClick={(ev: React.MouseEvent) => {handleEditClick(ev, a)}} />
                                         <Button icon={<DeleteFilled />} onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a)}} />
                                     </CardActions>

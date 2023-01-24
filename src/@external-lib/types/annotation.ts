@@ -35,7 +35,11 @@ interface CommonAnnotationProps {
     /**
      * option that is displayed on model
      */
-    display: boolean
+    display: boolean,
+    /**
+     * option that is selected by user
+     */
+    select: boolean,
 }
 
 /**
