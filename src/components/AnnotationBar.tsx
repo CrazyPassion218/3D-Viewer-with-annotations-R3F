@@ -235,6 +235,7 @@ export function AnnotationBar({
                                     style={{ maxWidth: 600, padding: 10, background: '#4b4f52', margin: 5, borderRadius: 5 }}
                                     validateMessages={validateMessages}
                                     form={form}
+                                    key={a.id}
                                 >
                                     <Form.Item name="title" rules={[{ required: true }]} style={{marginBottom: 5}}>
                                         <Input placeholder="title" />
@@ -255,7 +256,7 @@ export function AnnotationBar({
                         } else {
                             const bg = a.select ? '#8b8686': '#c3bfbf';
                             return (
-                                <Card className="annotation-list" style={{background: bg, margin: 5, textAlign: 'left'}}>
+                                <Card className="annotation-list" style={{background: bg, margin: 5, textAlign: 'left'}} key={a.id}>
                                     <CardContent style={{padding: '0 5px'}}>
                                         <Checkbox onChange={(ev: CheckboxChangeEvent) => {onCheckAnnotation(ev.target.checked, a, i)}} checked={isChecked[i]} style={{color: 'white'}}>
                                             <Typography gutterBottom variant="h5" component="h5" style={{marginBottom: '0px', fontSize: '15px'}}>
