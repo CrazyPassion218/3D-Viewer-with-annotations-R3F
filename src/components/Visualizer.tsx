@@ -531,8 +531,8 @@ function renderSprite(annotation: Annotation, position: SimpleVectorWithNormal, 
 function Dodecahedron({ ...props }) {
     return (
         <mesh {...props}>
-            <Html distanceFactor={50}>
-                <div style={{paddingTop : '12px', width: props.title.length * 4 + 50 + 'px', textAlign: 'left', background: 'rgba(2,2,2,0.8)', color: 'white', padding: '10px 5px',  borderRadius: '5px', opacity: props.opacity}}>
+            <Html distanceFactor={30}>
+                <div style={{paddingTop : '12px', width: props.title.length * 4 + 40 + 'px', textAlign: 'left', background: 'rgba(2,2,2,0.8)', color: 'white', padding: '10px 5px',  borderRadius: '5px', opacity: props.opacity}}>
                 <h4 style={{padding: '0', margin: '0', color: 'red'}}>{props.title}</h4>
                 <p style={{padding: '0', margin: '0', fontSize: '10px '}}>{props.description}</p>
                 </div>
