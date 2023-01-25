@@ -32,8 +32,10 @@ import {
     SPHERE_GEOMETRY,
     MESH_MATERIAL,
 } from "common/constants";
-import { Vector3 } from "three";
+import { Camera, Matrix3, Vector3 } from "three";
 import { OrbitControls } from "@react-three/drei";
+import {getAngleBetweenVectors, isFrontSide} from '../utils/customUtils'
+
 interface VisualizerProps {
     /**
      * Determines whether the canvas should be interactive. If set to `true`, you should not be able to move the camera
@@ -153,18 +155,51 @@ export function Visualizer({
                 /**
                  * animate the camera and move for focusing currnet annotation when user click annotation bar
                  */
+                // if(selectedAnnotation.face){
+                //     setEnableOrbitCamera(false);
+                //     const directVec = selectedAnnotation.face.normal;
+                //     console.log("normal : X " + directVec.x +  "normal : Y " + directVec.y, "normal : Z " + directVec.z);
+                //     const distance = 5;
+                //     let cameraCurrent = state?.camera;
+                //     let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
+                //     setOrbitControlTarget(objectPosition);
+                //     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
+                //     state?.renderer.setAnimationLoop(() => {
+                //         cameraCurrent?.lookAt(objectPosition);
+                //         cameraCurrent?.position.lerp(newPosition, 0.01);
+                //         cameraCurrent?.updateProjectionMatrix();
+                //     })
+                // }
                 if(selectedAnnotation.face){
                     setEnableOrbitCamera(false);
                     const directVec = selectedAnnotation.face.normal;
-                    const distance = 5;
-                    let cameraCurrent = state?.camera;
+                    const distance = 4;
                     let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
                     setOrbitControlTarget(objectPosition);
+                    const Clock = new Three.Clock;
+                    const delta = Clock.getDelta();
                     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
+                    let n = 2;
+                    let currentCamera = state?.camera.position;
+                    
                     state?.renderer.setAnimationLoop(() => {
-                        cameraCurrent?.lookAt(objectPosition);
-                        cameraCurrent?.position.lerp(newPosition, 0.02);
-                        cameraCurrent?.updateProjectionMatrix();
+                        
+                        let x = state.camera.position.x;
+                        let y = state.camera.position.y;
+                        let z = state.camera.position.z;
+                        if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
+                            state.camera.position.x = x * Math.cos(Math.pow(-1, n) * 0.01) + z * Math.sin(Math.pow(-1, n) * 0.01);
+                            state.camera.position.z = z * Math.cos(Math.pow(-1, n) * 0.01) - x * Math.sin(Math.pow(-1, n) * 0.01);
+                        }else{
+                            if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
+                                state.camera.position.lerp(newPosition, 0.01);
+                            }
+                            else{
+                                state.camera.position.x = x * Math.cos(Math.pow(-1, n) * 0.01) + z * Math.sin(Math.pow(-1, n) * 0.01);
+                                state.camera.position.z = z * Math.cos(Math.pow(-1, n) * 0.01) - x * Math.sin(Math.pow(-1, n) * 0.01);
+                            }
+                        }
+                        state.camera.lookAt(objectPosition);    
                     })
                 }
             }
@@ -224,6 +259,7 @@ export function Visualizer({
         },
         [model, modelBoundingBoxCenter, modelBoundingBoxSize, onReady]
     );
+
     /**
      * useCallback function to calculate various funcitons
      */
