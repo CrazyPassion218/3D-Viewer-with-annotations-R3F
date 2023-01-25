@@ -124,7 +124,6 @@ export function Visualizer({
      * state variable for orbitControl target
      */
     const [orbitControlTarget, setOrbitControlTarget] = React.useState<Three.Vector3>(modelBoundingBoxCenter);
-    const [enableOrbitCamera, setEnableOrbitCamera] = React.useState<boolean>(true);
     /**
      * opacity value for hide and show tooltip when user hover annotation.
      */
@@ -155,48 +154,30 @@ export function Visualizer({
                 /**
                  * animate the camera and move for focusing currnet annotation when user click annotation bar
                  */
-                // if(selectedAnnotation.face){
-                //     setEnableOrbitCamera(false);
-                //     const directVec = selectedAnnotation.face.normal;
-                //     console.log("normal : X " + directVec.x +  "normal : Y " + directVec.y, "normal : Z " + directVec.z);
-                //     const distance = 5;
-                //     let cameraCurrent = state?.camera;
-                //     let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
-                //     setOrbitControlTarget(objectPosition);
-                //     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
-                //     state?.renderer.setAnimationLoop(() => {
-                //         cameraCurrent?.lookAt(objectPosition);
-                //         cameraCurrent?.position.lerp(newPosition, 0.01);
-                //         cameraCurrent?.updateProjectionMatrix();
-                //     })
-                // }
                 if(selectedAnnotation.face){
-                    setEnableOrbitCamera(false);
                     const directVec = selectedAnnotation.face.normal;
-                    const distance = 4;
+                    const distance = 6;
                     let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
                     setOrbitControlTarget(objectPosition);
                     const Clock = new Three.Clock;
                     const delta = Clock.getDelta();
                     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
-                    let n = 2;
-                    let currentCamera = state?.camera.position;
-                    
+                    let angle = 0.04;
                     state?.renderer.setAnimationLoop(() => {
                         
                         let x = state.camera.position.x;
                         let y = state.camera.position.y;
                         let z = state.camera.position.z;
                         if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
-                            state.camera.position.x = x * Math.cos(Math.pow(-1, n) * 0.01) + z * Math.sin(Math.pow(-1, n) * 0.01);
-                            state.camera.position.z = z * Math.cos(Math.pow(-1, n) * 0.01) - x * Math.sin(Math.pow(-1, n) * 0.01);
+                            state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
+                            state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
                         }else{
                             if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
                                 state.camera.position.lerp(newPosition, 0.01);
                             }
                             else{
-                                state.camera.position.x = x * Math.cos(Math.pow(-1, n) * 0.01) + z * Math.sin(Math.pow(-1, n) * 0.01);
-                                state.camera.position.z = z * Math.cos(Math.pow(-1, n) * 0.01) - x * Math.sin(Math.pow(-1, n) * 0.01);
+                                state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
+                                state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
                             }
                         }
                         state.camera.lookAt(objectPosition);    
@@ -267,8 +248,6 @@ export function Visualizer({
         (ev: React.MouseEvent) => {
             //here, exit the camera animation
             state?.renderer.setAnimationLoop(null);
-            //here, use orbitcamera
-            setEnableOrbitCamera(true);
             //get the x,y,z position user clicked over model
             const clickContext = getClickContext(ev);
             if (disableInteractions || clickContext === undefined || clickContext.intersections.length === 0) {
@@ -356,7 +335,6 @@ export function Visualizer({
             onCreated={handleCanvasCreated}
         >
             <directionalLight color={0xffffff} intensity={1} position={LIGHT_POSITION} />
-            {enableOrbitCamera && 
             <OrbitControls
                 enabled={!disableInteractions}
                 enableDamping={true}
@@ -370,7 +348,7 @@ export function Visualizer({
                     RIGHT: undefined,
                 }}
                 target={orbitControlTarget}
-            />}
+            />
             <primitive object={model}/>
             {annotations.map((annotation) =>
                 visitAnnotation(annotation, {
@@ -553,8 +531,8 @@ function renderSprite(annotation: Annotation, position: SimpleVectorWithNormal, 
 function Dodecahedron({ ...props }) {
     return (
         <mesh {...props}>
-            <Html distanceFactor={10}>
-                <div style={{paddingTop : '12px', width: props.title.length * 13 + 'px', textAlign: 'left', background: 'rgba(2,2,2,0.8)', color: 'white', padding: '10px 5px',  borderRadius: '5px', opacity: props.opacity}}>
+            <Html distanceFactor={50}>
+                <div style={{paddingTop : '12px', width: props.title.length * 4 + 50 + 'px', textAlign: 'left', background: 'rgba(2,2,2,0.8)', color: 'white', padding: '10px 5px',  borderRadius: '5px', opacity: props.opacity}}>
                 <h4 style={{padding: '0', margin: '0', color: 'red'}}>{props.title}</h4>
                 <p style={{padding: '0', margin: '0', fontSize: '10px '}}>{props.description}</p>
                 </div>
