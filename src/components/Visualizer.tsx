@@ -163,14 +163,18 @@ export function Visualizer({
                     setSpriteOpacity(0);
                     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
                     let angle = 0.04;
+                    let totalAngle = 0;
                     let opacity = 0;
                     state?.renderer.setAnimationLoop(() => {
-                        // if((newPosition.y > 26) || (newPosition.y < -5)){
-                        //     state.camera.position.lerp(newPosition, 0.01);
-                        // }else{
-                            let x = state.camera.position.x;
-                            let z = state.camera.position.z;
-                            
+                        let x = state.camera.position.x;
+                        let z = state.camera.position.z;
+                        totalAngle += angle;
+                        if(totalAngle > Math.PI * 4){
+                            opacity += 0.003;
+                            if(opacity > 0.7) opacity = 0.7;
+                            setSpriteOpacity(opacity);
+                            state.camera.position.lerp(newPosition, 0.01);
+                        }else{
                             if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
                                 state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
                                 state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
@@ -186,7 +190,7 @@ export function Visualizer({
                                     state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
                                 }
                             }
-                        // }
+                        }
                         state.camera.lookAt(objectPosition);    
                     })
                 }
