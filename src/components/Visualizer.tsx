@@ -160,20 +160,26 @@ export function Visualizer({
                     const distance = modelBoundingBox.max.x - modelBoundingBox.min.x > modelBoundingBox.max.z - modelBoundingBox.min.z? (modelBoundingBox.max.x - modelBoundingBox.min.x)/1.5: (modelBoundingBox.max.z - modelBoundingBox.min.z)/1.5;
                     let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
                     setOrbitControlTarget(objectPosition);
+                    setSpriteOpacity(0);
                     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
                     let angle = 0.04;
+                    let opacity = 0;
                     state?.renderer.setAnimationLoop(() => {
                         // if((newPosition.y > 26) || (newPosition.y < -5)){
                         //     state.camera.position.lerp(newPosition, 0.01);
                         // }else{
                             let x = state.camera.position.x;
                             let z = state.camera.position.z;
+                            
                             if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
                                 state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
                                 state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
                             }else{
                                 if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
                                     state.camera.position.lerp(newPosition, 0.01);
+                                    opacity += 0.003;
+                                    if(opacity > 0.7) opacity = 0.7;
+                                    setSpriteOpacity(opacity);
                                 }
                                 else{
                                     state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
