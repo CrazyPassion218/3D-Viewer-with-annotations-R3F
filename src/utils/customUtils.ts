@@ -1,4 +1,3 @@
-import { ThreeElements } from "@react-three/fiber";
 import { Vector2, Vector3 } from "three";
 
 export function getAngleBetweenVectors(first: Vector2, second: Vector2): number{
