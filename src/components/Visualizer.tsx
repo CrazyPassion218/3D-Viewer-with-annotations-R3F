@@ -32,9 +32,10 @@ import {
     SPHERE_GEOMETRY,
     MESH_MATERIAL,
 } from "common/constants";
-import { Camera, Matrix3, Vector3 } from "three";
+import { Vector3 } from "three";
 import { OrbitControls } from "@react-three/drei";
-import {getAngleBetweenVectors, isFrontSide} from '../utils/customUtils'
+import {isFrontSide} from '../utils/customUtils'
+import { positions } from "@mui/system";
 
 interface VisualizerProps {
     /**
@@ -159,25 +160,26 @@ export function Visualizer({
                     const distance = 6;
                     let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
                     setOrbitControlTarget(objectPosition);
-                    const Clock = new Three.Clock;
-                    const delta = Clock.getDelta();
                     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
+                    console.log(newPosition.y);
                     let angle = 0.04;
                     state?.renderer.setAnimationLoop(() => {
-                        
-                        let x = state.camera.position.x;
-                        let y = state.camera.position.y;
-                        let z = state.camera.position.z;
-                        if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
-                            state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
-                            state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
+                        if((newPosition.y > 26) || (newPosition.y < -5)){
+                            state.camera.position.lerp(newPosition, 0.01);
                         }else{
-                            if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
-                                state.camera.position.lerp(newPosition, 0.01);
-                            }
-                            else{
+                            let x = state.camera.position.x;
+                            let z = state.camera.position.z;
+                            if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
                                 state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
                                 state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
+                            }else{
+                                if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
+                                    state.camera.position.lerp(newPosition, 0.01);
+                                }
+                                else{
+                                    state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
+                                    state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
+                                }
                             }
                         }
                         state.camera.lookAt(objectPosition);    
@@ -319,7 +321,7 @@ export function Visualizer({
     const handleOpacity = React.useCallback((value: number) => 
     {
         setSpriteOpacity(value);
-    },[spriteOpacity]);
+    },[]);
 
     return (
         <Canvas
@@ -480,7 +482,7 @@ function renderPointAnnotation(annotation: PointAnnotation, model: Three.Object3
             }
 
             // note: this will only work for non indexed geometry
-            const colorsAttribute = new Three.BufferAttribute(colorList, 3);
+            const colorsAttribute = new Three.BufferAttribute(colorList, 3, true);  //why true? and uint8
             mesh.geometry.setAttribute("color", colorsAttribute);
             mesh.geometry.attributes.color.needsUpdate = true;
             return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
