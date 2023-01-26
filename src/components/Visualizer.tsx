@@ -157,16 +157,15 @@ export function Visualizer({
                  */
                 if(selectedAnnotation.face){
                     const directVec = selectedAnnotation.face.normal;
-                    const distance = 6;
+                    const distance = modelBoundingBox.max.x - modelBoundingBox.min.x > modelBoundingBox.max.z - modelBoundingBox.min.z? (modelBoundingBox.max.x - modelBoundingBox.min.x)/1.5: (modelBoundingBox.max.z - modelBoundingBox.min.z)/1.5;
                     let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
                     setOrbitControlTarget(objectPosition);
                     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
-                    console.log(newPosition.y);
                     let angle = 0.04;
                     state?.renderer.setAnimationLoop(() => {
-                        if((newPosition.y > 26) || (newPosition.y < -5)){
-                            state.camera.position.lerp(newPosition, 0.01);
-                        }else{
+                        // if((newPosition.y > 26) || (newPosition.y < -5)){
+                        //     state.camera.position.lerp(newPosition, 0.01);
+                        // }else{
                             let x = state.camera.position.x;
                             let z = state.camera.position.z;
                             if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
@@ -181,7 +180,7 @@ export function Visualizer({
                                     state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
                                 }
                             }
-                        }
+                        // }
                         state.camera.lookAt(objectPosition);    
                     })
                 }
