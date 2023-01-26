@@ -3,7 +3,8 @@ import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
-
+import type { PaginationProps } from 'antd';
+import { Pagination } from 'antd';
 import { Annotation } from "@external-lib";
 import { Select, Button, Form, Input, Checkbox } from "antd";
 import { PlusOutlined, EditFilled, DeleteFilled, EyeTwoTone, EyeInvisibleTwoTone } from "@ant-design/icons";
@@ -101,7 +102,10 @@ export function AnnotationBar({
      * check list by following each annotation(boolean array)
      */
     const [isChecked, setIsChecked] = React.useState([] as boolean[]);
-
+    /**
+     * check list by following each annotation(boolean array)
+     */
+    const [currentPage, setCurrentPage] = React.useState(1);
     /**
      * useEffect function when call by following props annotation's changing.
      */
@@ -200,6 +204,9 @@ export function AnnotationBar({
         updateAnnotation(Object.assign({...annotation}, {display: checked}))
     };
 
+    const onChangePage: PaginationProps['onChange'] = (page) => {
+        setCurrentPage(page);
+    };
     return (
         <div style={{
             border: '1px dark solid',
@@ -209,7 +216,7 @@ export function AnnotationBar({
             top: "5%",
             right: "5%",
             zIndex: 100,
-            background: '#6e7377'
+            background: 'rgba(55,55,55,0.4)'
         }}>
             <Search placeholder="input search text" onSearch={onSearch} enterButton onChange={(ev: React.ChangeEvent) => onSearch(((ev.target) as any).value)} />
             <p style={{color: 'white'}}>Select the type of annotation</p>
@@ -241,7 +248,7 @@ export function AnnotationBar({
                             layout="vertical"
                             name="nest-messages"
                             onFinish={handleSaveClick}
-                            style={{ maxWidth: 600, padding: 10, background: '#4b4f52', margin: 5, borderRadius: 5 }}
+                            style={{ maxWidth: 600, padding: 10, background: 'rgba(10,10,10,0.6)', margin: 5, borderRadius: 5 }}
                             validateMessages={validateMessages}
                         >
                             <Form.Item name="title" rules={[{ required: true }]} style={{marginBottom: 5}}>
@@ -262,7 +269,7 @@ export function AnnotationBar({
                 }
                 <div style={{margin: '0 10px', textAlign: 'left'}}>
                     <Checkbox onChange={onCheckAllChange} checked={checkAll} style={{color: 'white'}}>
-                        show all
+                        {'show all' + ' ' + '(' + annotations.filter((annotation, index) => annotation.display).length + ')'}
                     </Checkbox>
                 </div>
                 {
@@ -295,36 +302,41 @@ export function AnnotationBar({
                                 </Form>
                             )
                         } else {
-                            const bg = a.select ? '#8b8686': '#c3bfbf';
+                            const bg = a.select ? 'rgba(30,30,30,0.5)': 'rgba(120,120,120,0.4)';
                             return (
-                                <Card className="annotation-list" style={{background: bg, margin: 5, textAlign: 'left'}} key={a.id}>
-                                    <CardContent style={{padding: '0 5px'}}>
-                                        <Checkbox onChange={(ev: CheckboxChangeEvent) => {onCheckAnnotation(ev.target.checked, a, i)}} checked={isChecked[i]} style={{color: 'white'}}>
-                                            <Typography gutterBottom variant="h5" component="h5" style={{marginBottom: '0px', fontSize: '15px'}}>
-                                                {a.title}
-                                            </Typography>
-                                            <Typography variant="body2" color="textSecondary" component="p" style={{marginBottom: '0px', fontSize: '12px', color: 'white'}}>
-                                                {a.description}
-                                            </Typography>
-                                        </Checkbox>
-                                    </CardContent>
-                                    <CardActions disableSpacing style={{textAlign: "right", padding: '3px', display: 'block'}}>
-                                        {
-                                            !a.select ?
-                                                a.display ?
-                                                    <Button icon={<EyeTwoTone />} onClick={(ev: React.MouseEvent) => {handleAnnotationClick(ev, a, 'select')}} /> :
-                                                    <Button icon={<EyeTwoTone />} disabled />
-                                                : a.display ? <Button icon={<EyeInvisibleTwoTone />} onClick={(ev: React.MouseEvent) => {handleAnnotationClick(ev, a, 'unselect')}} /> :
-                                                    <Button icon={<EyeInvisibleTwoTone />} disabled />
-                                        }
-                                        <Button icon={<EditFilled />} onClick={(ev: React.MouseEvent) => {handleEditClick(ev, a)}} />
-                                        <Button icon={<DeleteFilled />} onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a)}} />
-                                    </CardActions>
-                                </Card>
+                                <div key={a.id}>
+                                    {(i<currentPage*4) && (i + 1>(currentPage-1)*4) &&
+                                        <Card className="annotation-list" style={{background: bg, margin: 5, textAlign: 'left'}} key={a.id}>
+                                            <CardContent style={{padding: '0 5px'}}>
+                                                <Checkbox onChange={(ev: CheckboxChangeEvent) => {onCheckAnnotation(ev.target.checked, a, i)}} checked={isChecked[i]} style={{color: 'white'}}>
+                                                    <Typography gutterBottom variant="h5" component="h5" style={{marginBottom: '0px', fontSize: '15px'}}>
+                                                        {a.title}
+                                                    </Typography>
+                                                    <Typography variant="body2" color="textSecondary" component="p" style={{marginBottom: '0px', fontSize: '12px', color: 'white'}}>
+                                                        {a.description}
+                                                    </Typography>
+                                                </Checkbox>
+                                            </CardContent>
+                                            <CardActions disableSpacing style={{textAlign: "right", padding: '3px', display: 'block'}}>
+                                                {
+                                                    !a.select ?
+                                                        a.display ?
+                                                            <Button icon={<EyeTwoTone />} onClick={(ev: React.MouseEvent) => {handleAnnotationClick(ev, a, 'select')}} /> :
+                                                            <Button icon={<EyeTwoTone />} disabled />
+                                                        : a.display ? <Button icon={<EyeInvisibleTwoTone />} onClick={(ev: React.MouseEvent) => {handleAnnotationClick(ev, a, 'unselect')}} /> :
+                                                            <Button icon={<EyeInvisibleTwoTone />} disabled />
+                                                }
+                                                <Button icon={<EditFilled />} onClick={(ev: React.MouseEvent) => {handleEditClick(ev, a)}} />
+                                                <Button icon={<DeleteFilled />} onClick={(ev: React.MouseEvent) => {handleDeleteClick(ev, a)}} />
+                                            </CardActions>
+                                        </Card>
+                                    }
+                                </div>
                             )
                         }
                     })
                 }
+                <Pagination current={currentPage} onChange={onChangePage} defaultPageSize={4} total={annotations.length} hideOnSinglePage style={{'position' : 'absolute', 'bottom': '15px'}}/>
             </div>
         </div>
     );

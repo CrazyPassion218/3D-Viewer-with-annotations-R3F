@@ -38,6 +38,6 @@
 }
 
 .annotation-list:hover, .annotation-list:active, .annotation-list:visited, .annotation-list:focus {
-  background: #9f9696 !important;
+  background: rgba(180,180,180,0.6) !important;
 }
 
