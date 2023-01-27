@@ -1,9 +1,6 @@
-import { ThreeElements } from "@react-three/fiber";
-import { Vector3 } from "three";
 import { AnnotationData, AnnotationData_Heatmap } from "./annotationData";
-import { SimpleFaceWithNormal, SimpleVector3, SimpleVectorWithNormal } from "./vector";
+import { SimpleFaceWithNormal, SimpleVectorWithNormal } from "./vector";
 import * as Three from "three";
-
 export type Annotation = PointAnnotation | PathAnnotation | GroupAnnotation | AreaAnnotation;
 
 interface CommonAnnotationProps {
@@ -49,9 +46,9 @@ export interface PointAnnotation extends CommonAnnotationProps {
     type: "point";
 
     /**
-     * The face of the point on the model.
+     * The location of the point on the model.
      */
-    
+    location: SimpleVectorWithNormal;
 }
 
 /**
