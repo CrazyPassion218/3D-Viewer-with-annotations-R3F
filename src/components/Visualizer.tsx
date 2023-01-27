@@ -32,10 +32,9 @@ import {
     SPHERE_GEOMETRY,
     MESH_MATERIAL,
 } from "common/constants";
-import { Vector3 } from "three";
+import { MeshLambertMaterial, Vector3 } from "three";
 import { OrbitControls } from "@react-three/drei";
 import {isFrontSide} from '../utils/customUtils'
-import { positions } from "@mui/system";
 
 interface VisualizerProps {
     /**
@@ -59,10 +58,6 @@ interface VisualizerProps {
      */
     layerDepth: number;
     /**
-     * Various types of annotations.
-     */
-    annotationType:string
-    /**
      * Called when the canvas is ready.
      */
     onReady: () => void;
@@ -74,23 +69,21 @@ interface VisualizerProps {
     onClick: (wasClickIgnored: boolean) => void;
 
     /**
-     * Called when a model is clicked.
-     * @param annotation
-     */
-    selectAnnotation: (annotation: Annotation) => void;
-
-    /**
      * Called when a right click is registered.
      * @param worldPositionAndNormal
      * @param screenPosition
      * @returns
      */
-    onRightClick: (worldPositionAndNormal: SimpleVectorWithNormal, screenPosition: SimpleVector2) => void;
+    onRightClick: (worldPositionAndNormal: SimpleVectorWithNormal, screenPosition: SimpleVector2, annoMaterial: MeshLambertMaterial) => void;
 
     /**
      * selected annotation id in the viewer controller.
      */
     selectedAnnotation: Annotation;
+    /**
+     * define current state.
+     */
+    currentState: String;
 }
 
 interface VisualizerState {
@@ -105,12 +98,10 @@ export function Visualizer({
     disableInteractions = false,
     model,
     annotations,
-    annotationType,
-   // layerDepth,
+    layerDepth,
     onReady,
     onClick,
     onRightClick,
-    selectAnnotation,
     selectedAnnotation
 }: VisualizerProps) {
     /**
@@ -259,46 +250,7 @@ export function Visualizer({
         (ev: React.MouseEvent) => {
             //here, exit the camera animation
             state?.renderer.setAnimationLoop(null);
-            //get the x,y,z position user clicked over model
-            const clickContext = getClickContext(ev);
-            if (disableInteractions || clickContext === undefined || clickContext.intersections.length === 0) {
-                return;
-            }
-            const { intersections/*, camera, renderer*/ } = clickContext;
-            //annotation filter
-            switch (annotationType) {
-                case 'point':
-                    selectAnnotation({
-                        type: "point",
-                        location: {
-                            x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z
-                        } as SimpleVectorWithNormal,
-                        face: intersections[0].face as unknown as SimpleFaceWithNormal,
-                        material: annoMaterial, 
-                        data: {
-                            type: 'basic'
-                        },
-                        display: true,
-                        select: false
-                    } as PointAnnotation);
-                    break;
-                case 'area':
-                    selectAnnotation({
-                        type: "area",
-                        center: {
-                            x: intersections[0].point.x, y: intersections[0].point.y, z: intersections[0].point.z,
-                        } as SimpleVectorWithNormal,
-                        radius: 20,
-                        data: {
-                            type: 'basic'
-                        }
-                    } as AreaAnnotation);
-                    break;
-                case 'Group':
-                    break;
-                default:
-                    break;
-            }
+
             onClick(disableInteractions);
     }, [getClickContext, disableInteractions, onClick]);
     /**
@@ -306,8 +258,8 @@ export function Visualizer({
      */
     const handleRightClick = React.useCallback(
         (ev: React.MouseEvent) => {
+            state?.renderer.setAnimationLoop(null);
             const clickContext = getClickContext(ev);
-
             if (disableInteractions || clickContext === undefined || clickContext.intersections.length === 0) {
                 return;
             }
@@ -318,7 +270,8 @@ export function Visualizer({
 
             onRightClick(
                 worldPositionAndNormal,
-                convertWorldCoordsToScreenCoords(worldPositionAndNormal, camera, renderer)
+                convertWorldCoordsToScreenCoords(worldPositionAndNormal, camera, renderer),
+                annoMaterial
             );
         },
         [disableInteractions, getClickContext, onRightClick]
@@ -348,7 +301,7 @@ export function Visualizer({
             <directionalLight color={0xffffff} intensity={1} position={LIGHT_POSITION} />
             <OrbitControls
                 enabled={!disableInteractions}
-                enableDamping={true}
+                enableDamping={false}
                 enablePan={true}
                 maxDistance={modelBoundingBoxSize * 10}
                 maxZoom={ORBIT_CONTROLS_SETTINGS.maxZoom}

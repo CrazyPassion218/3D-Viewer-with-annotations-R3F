@@ -1,8 +1,21 @@
 import React from "react";
 import { Visualizer, AnnotationBar } from './viewer'
-import { Annotation } from "@external-lib";
 import * as Three from "three";
-
+import {
+    Annotation,
+    SimpleVector2,
+    SimpleVectorWithNormal,
+    SimpleFaceWithNormal,
+    visitAnnotation,
+    AreaAnnotation,
+    GroupAnnotation,
+    PointAnnotation,
+    visitAnnotationData,
+    compact,
+    MINIMUM_INTENSITY,
+    IntensityValue,
+} from "@external-lib";
+import { MeshLambertMaterial } from "three";
 interface AppLayoutProps {
     /**
      * The 3D model to display. This is loaded outside of the component, and the prop value never changes.
@@ -199,6 +212,42 @@ export function AppLayout({
         setAnnotations(_annotations);
     }
 
+    const handleMouseRightClicked = (worldPositionAndNormal : SimpleVectorWithNormal,
+        screenPosition: SimpleVector2, annoMaterial: MeshLambertMaterial) => {
+        switch (annotationType) {
+            case 'point':
+                selectAnnotation({
+                    type: "point",
+                    location: {
+                        x: worldPositionAndNormal.x, y: worldPositionAndNormal.y, z: worldPositionAndNormal.z
+                    } as SimpleVectorWithNormal,
+                    face: worldPositionAndNormal as unknown as SimpleFaceWithNormal,
+                    material: annoMaterial, 
+                    data: {
+                        type: 'basic'
+                    },
+                    display: true,
+                    select: false
+                } as PointAnnotation);
+                break;
+            case 'area':
+                selectAnnotation({
+                    type: "area",
+                    center: {
+                        x: worldPositionAndNormal.x, y: worldPositionAndNormal.y, z: worldPositionAndNormal.z,
+                    } as SimpleVectorWithNormal,
+                    radius: 20,
+                    data: {
+                        type: 'basic'
+                    }
+                } as AreaAnnotation);
+                break;
+            case 'Group':
+                break;
+            default:
+                break;
+        }
+    }
     return (
         <div style={{'height': '100%'}}>
             <AnnotationBar
@@ -218,12 +267,11 @@ export function AppLayout({
                 model = {model}
                 annotations = {annotations.filter(a => a.type === annotationType && (!search || a.title.indexOf(search) === 0) && a.display)}
                 layerDepth = {1}
-                annotationType = {annotationType}
                 onReady = {() => {}}
                 onClick = {()=>{}}
-                onRightClick = {() =>{}}
-                selectAnnotation = {selectAnnotation}
+                onRightClick = {handleMouseRightClicked}
                 selectedAnnotation = {selectedAnnotation}
+                currentState = {controlStatus}
             />
         </div>
     );
