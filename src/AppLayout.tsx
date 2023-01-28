@@ -76,6 +76,7 @@ export function AppLayout({
      */
     const selectAnnotation = (a: Annotation) => {
         if (controlStatus === 'annotation') {
+            console.log(search);
             const date = new Date();
             a.id = date.valueOf();
             
@@ -265,7 +266,8 @@ export function AppLayout({
             <Visualizer
                 disableInteractions={false}
                 model = {model}
-                annotations = {annotations.filter(a => a.type === annotationType && (!search || a.title.indexOf(search) === 0) && a.display)}
+                annotations = {annotations.filter(a => { 
+                    return (a.title? a.type === annotationType && (!search || a.title.indexOf(search) === 0) && a.display : true)})}
                 layerDepth = {1}
                 onReady = {() => {}}
                 onClick = {()=>{}}

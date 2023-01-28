@@ -133,7 +133,6 @@ export function AnnotationBar({
      */
     const handleAddClick = (ev: React.MouseEvent) => {
         ev.preventDefault();
-
         updateControlStatus("annotation");
     }
 
