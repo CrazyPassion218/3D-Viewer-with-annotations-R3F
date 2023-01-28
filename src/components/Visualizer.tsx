@@ -154,13 +154,16 @@ export function Visualizer({
                     setSpriteOpacity(0);
                     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
                     let angle = 0.04;
-                    let totalAngle = 0;
+                    // let totalAngle = 0;
                     let opacity = 0;
+                    let totalAngle = 0;
                     state?.renderer.setAnimationLoop(() => {
                         let x = state.camera.position.x;
                         let z = state.camera.position.z;
+                        let y = state.camera.position.y;
+                        let isUp = y > newPosition.y?1: 2;
                         totalAngle += angle;
-                        if(totalAngle > Math.PI * 4){
+                        if(y > newPosition.y){
                             opacity += 0.003;
                             if(opacity > 0.7) opacity = 0.7;
                             setSpriteOpacity(opacity);
@@ -169,6 +172,7 @@ export function Visualizer({
                             if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
                                 state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
                                 state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
+                                state.camera.position.y += 0.1 * Math.pow(-1, isUp);
                             }else{
                                 if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
                                     state.camera.position.lerp(newPosition, 0.01);
@@ -179,11 +183,12 @@ export function Visualizer({
                                 else{
                                     state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
                                     state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
+                                    state.camera.position.y += 0.1 * Math.pow(-1, isUp);
                                 }
                             }
-                        }
+                        // }
                         state.camera.lookAt(objectPosition);    
-                    })
+                    }})
                 }
             }
         },[selectedAnnotation]
