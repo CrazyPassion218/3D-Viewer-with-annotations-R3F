@@ -155,7 +155,6 @@ export function Visualizer({
                     setSpriteOpacity(0);
                     const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
                     let angle = 0.04;
-                    // let totalAngle = 0;
                     let opacity = 0;
                     state?.renderer.setAnimationLoop(() => {
                         let x = state.camera.position.x;
@@ -190,7 +189,7 @@ export function Visualizer({
                     }})
                 }
             }
-        },[selectedAnnotation, modelBoundingBox, state?.camera, state?.model, state?.raycaster, state?.renderer]
+        },[selectedAnnotation]
     )
     /**
      * useCallback function to get point user clicked over model
@@ -256,7 +255,7 @@ export function Visualizer({
             state?.renderer.setAnimationLoop(null);
 
             onClick(disableInteractions);
-    }, [disableInteractions, onClick, state?.renderer]);
+    }, [getClickContext, disableInteractions, onClick]);
     /**
      * useCallback function occurs when right mouse button clicked
      */
@@ -278,7 +277,7 @@ export function Visualizer({
                 annoMaterial
             );
         },
-        [disableInteractions, getClickContext, onRightClick, annoMaterial, state?.renderer]
+        [disableInteractions, getClickContext, onRightClick]
     );
 
     /**
