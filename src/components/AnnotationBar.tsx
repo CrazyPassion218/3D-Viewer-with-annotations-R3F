@@ -9,7 +9,13 @@ import { Annotation } from "@external-lib";
 import { Select, Button, Form, Input, Checkbox } from "antd";
 import { PlusOutlined, EditFilled, DeleteFilled, EyeTwoTone, EyeInvisibleTwoTone } from "@ant-design/icons";
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
-
+import {
+    AnnotationExtends,
+    visitAnnotationExtends,
+    AreaAnnotationExtends,
+    GroupAnnotationExtends,
+    PointAnnotationExtends,
+} from 'user-types'
 const { Search } = Input;
 
 const validateMessages = {
@@ -33,14 +39,14 @@ interface AnnotationControllerProps{
      * Called when annotation is removed.
      * @param id AnnotationBuffer id String
      */
-    removeAnnotation: (annotation: Annotation) => void;
+    removeAnnotation: (annotation: AnnotationExtends) => void;
 
     /**
      * Called when annotation is updated.
      * @param id AnnotationBuffer id String
      * @param a AnnotationBuffer Interface
      */
-    updateAnnotation: (annotation: Annotation) => void;
+    updateAnnotation: (annotation: AnnotationExtends) => void;
 
     /**
      * Called when current control view status is changed.
@@ -53,7 +59,7 @@ interface AnnotationControllerProps{
      * @param id number
      * @param key string(select, unselect)
      */
-    selectAnnotationControl: (a: Annotation, key: string) => void;
+    selectAnnotationControl: (a: AnnotationExtends, key: string) => void;
 
     /**
      * Called when search string is changed.
@@ -70,7 +76,7 @@ interface AnnotationControllerProps{
     /**
      * The list of annotations buffers for the given model.
      */
-    annotations: Annotation[];
+    annotations: AnnotationExtends[];
 
     /**
      * current control view status
@@ -122,7 +128,7 @@ export function AnnotationBar({
         ev.preventDefault();
 
         if (key === 'add') {
-            removeAnnotation({} as Annotation);
+            removeAnnotation({} as AnnotationExtends);
         }
 
         updateControlStatus("normal");
@@ -146,7 +152,7 @@ export function AnnotationBar({
     /**
      * submit call when user clicks change button to update annotation
      */
-    const handleChangeClick = (values: any, annotation: Annotation) => {
+    const handleChangeClick = (values: any, annotation: AnnotationExtends) => {
         annotation.title = values.title;
         annotation.description = values.description;
 
@@ -156,7 +162,7 @@ export function AnnotationBar({
     /**
      * submit call when user clicks delete button
      */
-    const handleDeleteClick = (ev: React.MouseEvent, annotation: Annotation) => {
+    const handleDeleteClick = (ev: React.MouseEvent, annotation: AnnotationExtends) => {
         ev.preventDefault();
 
         removeAnnotation(annotation);
@@ -165,7 +171,7 @@ export function AnnotationBar({
     /**
      * link call when user clicks edit button
      */
-    const handleEditClick = (ev: React.MouseEvent, annotation: Annotation) => {
+    const handleEditClick = (ev: React.MouseEvent, annotation: AnnotationExtends) => {
         ev.preventDefault();
 
         form.setFieldsValue({ title: annotation.title, description: annotation.description });
@@ -175,7 +181,7 @@ export function AnnotationBar({
     /**
      * call when user clicks annotation controller on annotation list
      */
-    const handleAnnotationClick = (ev: React.MouseEvent, annotation: Annotation, key: string) => {
+    const handleAnnotationClick = (ev: React.MouseEvent, annotation: AnnotationExtends, key: string) => {
         ev.preventDefault();
 
         selectAnnotationControl(annotation, key);
@@ -199,7 +205,7 @@ export function AnnotationBar({
     /**
      * call when user checks each annotation controller on annotation list
      */
-    const onCheckAnnotation = (checked: boolean, annotation: Annotation, index: number) => {
+    const onCheckAnnotation = (checked: boolean, annotation: AnnotationExtends, index: number) => {
         updateAnnotation(Object.assign({...annotation}, {display: checked}))
     };
 
