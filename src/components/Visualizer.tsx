@@ -141,6 +141,8 @@ export function Visualizer({
     /**
      * useEffect function
      */
+
+    const groupRef = React.useRef<any>();
     React.useEffect(
         () => {
             if (selectedAnnotation) {
@@ -265,6 +267,7 @@ export function Visualizer({
      */
     const handleClick = React.useCallback(
         (ev: React.MouseEvent) => {
+            
             //here, exit the camera animation
             state?.renderer.setAnimationLoop(null);
 
@@ -309,18 +312,18 @@ export function Visualizer({
         if(enableCustomController){
             if(Math.abs((ClientPointerX-ev.clientX)/(ClientPointerY-ev.clientY)) > 1){
                 if(ClientPointerX > ev.clientX){
-                    state?.model.rotateY(-0.1);
+                    groupRef.current.rotateY(-0.1);
                 }
                 else {
-                    state?.model.rotateY(0.1);
+                    groupRef.current.rotateY(0.1);
                 }
             }
             else{
-                let distance = state?.model.position.y;
+                let distance = groupRef.current.position.y;
                 if(distance !== undefined){
                     if(ClientPointerY > ev.clientY)distance += 0.1;
                     else distance -= 0.1;
-                    state?.model.position.set(state?.model.position.x, distance, state?.model.position.z);
+                    groupRef.current.position.set(groupRef.current.position.x, distance, groupRef.current.position.z);
                 }
 
             }
@@ -387,6 +390,7 @@ export function Visualizer({
                     }}
                     target={orbitControlTarget}
                 />}
+            <group ref={groupRef}>
             <primitive object={model}/>
             {annotations.map((annotation) =>
                 visitAnnotationExtends(annotation, {
@@ -406,6 +410,7 @@ export function Visualizer({
                     unknown: () => undefined,
                 })
             )}
+            </group>
         </Canvas>
     );
 }
