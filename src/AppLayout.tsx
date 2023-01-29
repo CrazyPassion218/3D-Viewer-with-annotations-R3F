@@ -65,7 +65,7 @@ export function AppLayout({
         setTimeout(function() {
             setAnnotations([...annotations]);
         }, 100);
-    }, [annotationType, annotations])
+    }, [annotationType])
 
     /**
      * Called when user selected point annotation.
