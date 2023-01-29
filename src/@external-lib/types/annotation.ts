@@ -1,42 +1,12 @@
 import { AnnotationData, AnnotationData_Heatmap } from "./annotationData";
-import { SimpleFaceWithNormal, SimpleVectorWithNormal } from "./vector";
-import * as Three from "three";
+import {SimpleVectorWithNormal } from "./vector";
 export type Annotation = PointAnnotation | PathAnnotation | GroupAnnotation | AreaAnnotation;
 
 interface CommonAnnotationProps {
-    id: number,
     /**
      * Stored annotation data.
      */
     data: AnnotationData;
-    /**
-     * point vector.
-     */
-    location: SimpleVectorWithNormal,
-    /**
-     * annotation title
-     */
-    title: string,
-    /**
-     * annotation description
-     */
-    description: string,
-    /**
-     * stored model face
-     */
-    face: SimpleFaceWithNormal,
-    /**
-     * stored annotation material
-     */
-    material: Three.MeshLambertMaterial,
-    /**
-     * option that is displayed on model
-     */
-    display: boolean,
-    /**
-     * option that is selected by user
-     */
-    select: boolean,
 }
 
 /**

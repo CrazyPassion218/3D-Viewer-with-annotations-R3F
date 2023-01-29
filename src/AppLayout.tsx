@@ -2,19 +2,17 @@ import React from "react";
 import { Visualizer, AnnotationBar } from './viewer'
 import * as Three from "three";
 import {
-    Annotation,
     SimpleVector2,
     SimpleVectorWithNormal,
     SimpleFaceWithNormal,
-    visitAnnotation,
-    AreaAnnotation,
-    GroupAnnotation,
-    PointAnnotation,
-    visitAnnotationData,
-    compact,
-    MINIMUM_INTENSITY,
-    IntensityValue,
 } from "@external-lib";
+import {
+    AnnotationExtends,
+    // visitAnnotationExtends,
+    AreaAnnotationExtends,
+    // GroupAnnotationExtends,
+    PointAnnotationExtends,
+} from 'user-types'
 import { MeshLambertMaterial } from "three";
 interface AppLayoutProps {
     /**
@@ -29,11 +27,11 @@ export function AppLayout({
     /**
      * all annotations. This means virtual annotation database.
      */
-    const [annotations, setAnnotations] = React.useState([] as Annotation[]);
+    const [annotations, setAnnotations] = React.useState([] as AnnotationExtends[]);
     /**
      * This means annotation set on the model by user.
      */
-    const [currentAnnotation, setCurrentAnnotation] = React.useState({} as Annotation);
+    const [currentAnnotation, setCurrentAnnotation] = React.useState({} as AnnotationExtends);
     /**
      * This means annotation type set in the current time.
      */
@@ -45,7 +43,7 @@ export function AppLayout({
     /**
      * This means selected and unselected annotation control.
      */
-    const [selectedAnnotation, setSelectedAnnotation] = React.useState({} as Annotation);
+    const [selectedAnnotation, setSelectedAnnotation] = React.useState({} as AnnotationExtends);
     /**
      * This means search string input by user in the current time.
      */
@@ -56,27 +54,26 @@ export function AppLayout({
      */
     React.useEffect(() => {
         if (controlStatus === 'normal')
-            setCurrentAnnotation({} as Annotation);
+            setCurrentAnnotation({} as AnnotationExtends);
     }, [controlStatus, annotations]);
 
     /**
      * useEffect function when call by following annotation type's changing.
      */
     React.useEffect(() => {
-        setAnnotations([] as Annotation[]);
+        setAnnotations([] as AnnotationExtends[]);
         setTimeout(function() {
             setAnnotations([...annotations]);
         }, 100);
-    }, [annotationType])
+    }, [annotationType, annotations])
 
     /**
      * Called when user selected point annotation.
      * @param a Annotation
      * @returns
      */
-    const selectAnnotation = (a: Annotation) => {
+    const selectAnnotation = (a: AnnotationExtends) => {
         if (controlStatus === 'annotation') {
-            console.log(search);
             const date = new Date();
             a.id = date.valueOf();
             
@@ -110,10 +107,10 @@ export function AppLayout({
      * @param annotation Annotation
      * @returns
      */
-    const removeAnnotation = (annotation: Annotation) => {
+    const removeAnnotation = (annotation: AnnotationExtends) => {
         let _annotations = [...annotations];
 
-        setAnnotations([] as Annotation[]);
+        setAnnotations([] as AnnotationExtends[]);
         setTimeout(function() {
             if (!annotation.title) {
                 setAnnotations(_annotations.filter(a => a.id !== currentAnnotation.id));
@@ -129,12 +126,12 @@ export function AppLayout({
      * @param annotation Annotation
      * @returns
      */
-    const updateAnnotation = (annotation: Annotation) => {
+    const updateAnnotation = (annotation: AnnotationExtends) => {
         let _annotations = [...annotations];
         _annotations = _annotations.map(a => {
             return (a.id === annotation.id) ? annotation : a;
         });
-        setAnnotations([] as Annotation[]);
+        setAnnotations([] as AnnotationExtends[]);
         setTimeout(function() {
             setAnnotations(_annotations);
         }, 100);
@@ -166,7 +163,7 @@ export function AppLayout({
      * @param key string
      * @returns
      */
-    const selectAnnotationControl = (annotation: Annotation, key: string) => {
+    const selectAnnotationControl = (annotation: AnnotationExtends, key: string) => {
         if (key === 'select') {
             let _annotations = [...annotations];
             _annotations = _annotations.map(a => {
@@ -183,7 +180,7 @@ export function AppLayout({
         }
         else {
             updateAnnotation(Object.assign({...annotation}, {select: false}));
-            setSelectedAnnotation({} as Annotation);
+            setSelectedAnnotation({} as AnnotationExtends);
         }
     }
 
@@ -229,7 +226,7 @@ export function AppLayout({
                     },
                     display: true,
                     select: false
-                } as PointAnnotation);
+                } as PointAnnotationExtends);
                 break;
             case 'area':
                 selectAnnotation({
@@ -237,11 +234,18 @@ export function AppLayout({
                     center: {
                         x: worldPositionAndNormal.x, y: worldPositionAndNormal.y, z: worldPositionAndNormal.z,
                     } as SimpleVectorWithNormal,
+                    location: {
+                        x: worldPositionAndNormal.x, y: worldPositionAndNormal.y, z: worldPositionAndNormal.z,
+                    } as SimpleVectorWithNormal,
+                    face: worldPositionAndNormal as unknown as SimpleFaceWithNormal,
+                    material: annoMaterial, 
                     radius: 20,
                     data: {
                         type: 'basic'
-                    }
-                } as AreaAnnotation);
+                    },
+                    display: true,
+                    select: false
+                } as AreaAnnotationExtends);
                 break;
             case 'Group':
                 break;
