@@ -14,6 +14,8 @@ import {
     PointAnnotationExtends,
 } from 'user-types'
 import { MeshLambertMaterial } from "three";
+import { Select } from "antd";
+import { getValue } from "@testing-library/user-event/dist/utils";
 interface AppLayoutProps {
     /**
      * The 3D model to display. This is loaded outside of the component, and the prop value never changes.
@@ -48,6 +50,8 @@ export function AppLayout({
      * This means search string input by user in the current time.
      */
     const [search, setSearch] = React.useState('' as string);
+
+    const [viewMode, setViewMode] = React.useState<string>('orbit');
 
     /**
      * useEffect function when call by following controlStatus and annotations's changing.
@@ -253,8 +257,24 @@ export function AppLayout({
                 break;
         }
     }
+
+    const changeViewMode = (ev: string) => {
+        setViewMode(ev);
+    };
     return (
         <div style={{'height': '100%'}}>
+            <div style={{ width: '200px', marginRight: 10, position: "absolute", top: 30, left: 20, zIndex: 100}}>
+                <p>Select view mode</p>
+                <Select
+                    defaultValue={'orbit'}
+                    style={{ width: 120, marginRight: 10}}
+                    onChange={changeViewMode}
+                    options={[
+                        { value: 'orbit', label: 'camera 1', selected: true},
+                        { value: 'custom', label: 'camera 2' },
+                    ]}
+                />
+            </div>
             <AnnotationBar
                 insertAnnotation = {insertAnnotation}
                 updateAnnotation = {updateAnnotation}
@@ -278,6 +298,7 @@ export function AppLayout({
                 onRightClick = {handleMouseRightClicked}
                 selectedAnnotation = {selectedAnnotation}
                 currentState = {controlStatus}
+                viewMode={viewMode}
             />
         </div>
     );

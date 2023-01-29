@@ -85,6 +85,8 @@ interface VisualizerProps {
      * define current state.
      */
     currentState: String;
+
+    viewMode : string;
 }
 
 interface VisualizerState {
@@ -100,6 +102,7 @@ export function Visualizer({
     model,
     annotations,
     layerDepth,
+    viewMode,
     onReady,
     onClick,
     onRightClick,
@@ -126,10 +129,15 @@ export function Visualizer({
      */
     const [annoId, setAnnoId] = React.useState<number>(1);
     const [annoMaterial, setAnnoMaterial] = React.useState<Three.MeshLambertMaterial>(MESH_MATERIAL);
+    const [enableOrbitControl, setEnableOrbitControl] = React.useState<string>(viewMode);
+
+    const canvasRef = React.useRef<any>();
+    // const [enableCustomController, setEnableCustomController] = React.useState<boolean>(false);
     // TODO use `layerDepth` to show the various layers of an object
     // compute the box that contains all the stuff in the model
-    
-
+    let ClientPointerX = 0;
+    let ClientPointerY = 0;
+    let enableCustomController = false;
     /**
      * useEffect function
      */
@@ -189,7 +197,13 @@ export function Visualizer({
                     }})
                 }
             }
-        },[selectedAnnotation]
+        },[selectedAnnotation, viewMode]
+    )
+
+    React.useEffect(
+        () => {
+            setEnableOrbitControl(viewMode);
+        },[viewMode]
     )
     /**
      * useCallback function to get point user clicked over model
@@ -279,6 +293,45 @@ export function Visualizer({
         },
         [disableInteractions, getClickContext, onRightClick]
     );
+    
+
+    const onPointerDown = React.useCallback(
+        (ev: React.PointerEvent) => {
+            if(enableOrbitControl === 'custom'){
+                enableCustomController = true;
+                ClientPointerX = ev.clientX;
+                ClientPointerY = ev.clientY;
+            }
+            return ;
+        },[getClickContext, disableInteractions, onClick, enableOrbitControl,viewMode]
+    );
+    const onPointerMove  = React.useCallback((ev: React.PointerEvent) => {
+        if(enableCustomController){
+            if(Math.abs((ClientPointerX-ev.clientX)/(ClientPointerY-ev.clientY)) > 1){
+                if(ClientPointerX > ev.clientX){
+                    state?.model.rotateY(-0.1);
+                }
+                else {
+                    state?.model.rotateY(0.1);
+                }
+            }
+            else{
+                let distance = state?.model.position.y;
+                if(distance !== undefined){
+                    if(ClientPointerY > ev.clientY)distance += 0.1;
+                    else distance -= 0.1;
+                    state?.model.position.set(state?.model.position.x, distance, state?.model.position.z);
+                }
+
+            }
+            ClientPointerX = ev.clientX;
+            ClientPointerY = ev.clientY;
+        }
+    }, [getClickContext, disableInteractions, onClick, enableOrbitControl, viewMode])
+
+    const onPointerUp  = React.useCallback((ev: React.PointerEvent) => {
+        enableCustomController = false;
+    }, [getClickContext, disableInteractions, onClick, enableOrbitControl, viewMode])
 
     /**
      * useCallback function to set the annotation opacity
@@ -291,6 +344,9 @@ export function Visualizer({
     return (
         <Canvas
             onClick={handleClick}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
             onContextMenu={handleRightClick}
             resize={{ debounce: 50 }}
             style={{
@@ -302,20 +358,35 @@ export function Visualizer({
             onCreated={handleCanvasCreated}
         >
             <directionalLight color={0xffffff} intensity={1} position={LIGHT_POSITION} />
-            <OrbitControls
-                enabled={!disableInteractions}
-                enableDamping={false}
-                enablePan={true}
-                maxDistance={modelBoundingBoxSize * 10}
-                maxZoom={ORBIT_CONTROLS_SETTINGS.maxZoom}
-                minZoom={ORBIT_CONTROLS_SETTINGS.minZoom}
-                mouseButtons={{
-                    LEFT: Three.MOUSE.ROTATE,
-                    MIDDLE: undefined,
-                    RIGHT: undefined,
-                }}
-                target={orbitControlTarget}
-            />
+                {enableOrbitControl === 'orbit'? 
+                <OrbitControls
+                    enabled={!disableInteractions}
+                    enableDamping={false}
+                    enablePan={true}
+                    maxDistance={modelBoundingBoxSize * 10}
+                    maxZoom={ORBIT_CONTROLS_SETTINGS.maxZoom}
+                    minZoom={ORBIT_CONTROLS_SETTINGS.minZoom}
+                    mouseButtons={{
+                        LEFT: Three.MOUSE.ROTATE,
+                        MIDDLE: undefined,
+                        RIGHT: Three.MOUSE.PAN,
+                    }}
+                    target={orbitControlTarget}
+                />:
+                <OrbitControls
+                    enabled={!disableInteractions}
+                    enableDamping={false}
+                    enablePan={false}
+                    maxDistance={modelBoundingBoxSize * 10}
+                    maxZoom={ORBIT_CONTROLS_SETTINGS.maxZoom}
+                    minZoom={ORBIT_CONTROLS_SETTINGS.minZoom}
+                    mouseButtons={{
+                        LEFT: undefined,
+                        MIDDLE: undefined,
+                        RIGHT: undefined,
+                    }}
+                    target={orbitControlTarget}
+                />}
             <primitive object={model}/>
             {annotations.map((annotation) =>
                 visitAnnotationExtends(annotation, {
@@ -374,7 +445,6 @@ function renderAreaAnnotation(annotation: AreaAnnotationExtends, model: Three.Ob
     const colorsAttribute = new Three.BufferAttribute(colorList, 3, true);
     mesh.geometry.setAttribute("color", colorsAttribute);
     mesh.geometry.attributes.color.needsUpdate = true;
-    console.log(mesh);
     return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
 }
 /**
@@ -473,7 +543,7 @@ function renderPoint(annotation: AnnotationExtends, handleOpacity: Function, set
         setAnnoId(0);
     }
 
-    let key = 0;
+    let key = annotation.id;
     return (
         <mesh
             onPointerOver={onMouseOverAnnotaion}
