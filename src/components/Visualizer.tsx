@@ -1,6 +1,8 @@
 import * as React from "react";
 import * as Three from "three";
-import { Html } from "@react-three/drei"
+import { Html, OrbitControls } from "@react-three/drei"
+import { Canvas, RootState  } from "@react-three/fiber";
+import { MeshLambertMaterial, Vector3 } from "three";
 import {
     SimpleVector2,
     SimpleVectorWithNormal,
@@ -9,6 +11,7 @@ import {
     MINIMUM_INTENSITY,
     IntensityValue,
 } from "@external-lib";
+
 import {
     AnnotationExtends,
     AreaAnnotationExtends,
@@ -17,15 +20,16 @@ import {
     visitAnnotationExtends,
 } from "user-types";
 
-import { Canvas, RootState  } from "@react-three/fiber";
-import { AREA_ANNOTATION_COLOR, getHeatmapColor, SCENE_BACKGROUND_COLOR } from "../common/colors";
+import { AREA_ANNOTATION_COLOR, getHeatmapColor, SCENE_BACKGROUND_COLOR, MODEL_PRIMITIVE_COLOR } from "../common/colors";
 import { findTween, getTween } from "../utils/tweenUtils";
+import {isFrontSide, getAngleBetweenVectors} from '../utils/customUtils'
 import {
     convertToThreeJSVector,
     convertWorldCoordsToScreenCoords,
     frameArea,
     getWorldPositionAndNormal,
 } from "../utils/visualizerUtils";
+
 import {
     INITIAL_CAMERA_SETTINGS,
     LIGHT_POSITION,
@@ -33,9 +37,8 @@ import {
     SPHERE_GEOMETRY,
     MESH_MATERIAL,
 } from "common/constants";
-import { MeshLambertMaterial, Vector3 } from "three";
-import { OrbitControls } from "@react-three/drei";
-import {isFrontSide} from '../utils/customUtils'
+
+
 
 interface VisualizerProps {
     /**
@@ -46,10 +49,10 @@ interface VisualizerProps {
     /**
      * The 3D model to display. This is loaded outside of the component, and the prop value never changes.
      */
-    model: Three.Object3D<Three.Event>;
+    model: Three.Mesh;
 
     /**
-     * The list of annotations for the given model.
+     * The list of annotations for the given model. (@newly inserted props)
      */
     annotations: AnnotationExtends[];
 
@@ -78,22 +81,33 @@ interface VisualizerProps {
     onRightClick: (worldPositionAndNormal: SimpleVectorWithNormal, screenPosition: SimpleVector2, annoMaterial: MeshLambertMaterial) => void;
 
     /**
-     * selected annotation id in the viewer controller.
+     * Called when user hide, delete or search the annotation in whole types. This is used to show annotation interactively with user's action
+     * @param value Tells us whether this annotation is deleted, searched or hidden.(@newly inserted props)
+     */
+    setDelOrHide: (value: boolean) => void;
+    /**
+     * selected annotation id in the viewer controller.(@newly inserted props)
      */
     selectedAnnotation: AnnotationExtends;
     /**
-     * define current state.
+     * define current state.(@newly inserted props)
      */
     currentState: String;
-
+    /**
+     * define view mode user selected.(@newly inserted props)
+     */
     viewMode : string;
+    /**
+     * define whether this annotation should be hide or delete(@newly inserted props)
+     */
+    delOrHide : boolean;
 }
 
 interface VisualizerState {
     renderer: Three.WebGLRenderer;
     camera: Three.PerspectiveCamera;
     scene: Three.Scene;
-    model: Three.Object3D;
+    model: Three.Mesh;
     raycaster: Three.Raycaster;
 }
 
@@ -103,6 +117,8 @@ export function Visualizer({
     annotations,
     layerDepth,
     viewMode,
+    delOrHide,
+    setDelOrHide,
     onReady,
     onClick,
     onRightClick,
@@ -129,20 +145,26 @@ export function Visualizer({
      */
     const [annoId, setAnnoId] = React.useState<number>(1);
     const [annoMaterial, setAnnoMaterial] = React.useState<Three.MeshLambertMaterial>(MESH_MATERIAL);
+    /**
+     * state value for definition whether orbit control is used or not. 
+     */
     const [enableOrbitControl, setEnableOrbitControl] = React.useState<string>(viewMode);
-
+    /**
+     * annotation Id and material 
+     */
     const canvasRef = React.useRef<any>();
-    // const [enableCustomController, setEnableCustomController] = React.useState<boolean>(false);
     // TODO use `layerDepth` to show the various layers of an object
     // compute the box that contains all the stuff in the model
     let ClientPointerX = 0;
     let ClientPointerY = 0;
     let enableCustomController = false;
     /**
-     * useEffect function
+     * useRef instance for group component
      */
-
     const groupRef = React.useRef<any>();
+    /**
+     * useEffect function that is called when user select specific annotation
+     */
     React.useEffect(
         () => {
             if (selectedAnnotation) {
@@ -159,53 +181,108 @@ export function Visualizer({
                  */
                 if(selectedAnnotation.face){
                     const directVec = selectedAnnotation.face.normal;
-                    const distance = modelBoundingBox.max.x - modelBoundingBox.min.x > modelBoundingBox.max.z - modelBoundingBox.min.z? (modelBoundingBox.max.x - modelBoundingBox.min.x)/1.5: (modelBoundingBox.max.z - modelBoundingBox.min.z)/1.5;
+                    let angle = 0.03;
+                    let radius = modelBoundingBox.max.y - modelBoundingBoxCenter.y + 2;
                     let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
+                    let obj = new Vector3(selectedAnnotation.location.x - modelBoundingBoxCenter.x, selectedAnnotation.location.y - modelBoundingBoxCenter.y, selectedAnnotation.location.z - modelBoundingBoxCenter.z)
+                    let distanceB = - (directVec.x * obj.x + directVec.y * obj.y + directVec.z * obj.z);
+                    let distanceA = Math.pow(directVec.x, 2) + Math.pow(directVec.y, 2) + Math.pow(directVec.z, 2);
+                    let distanceD = Math.sqrt(Math.pow(distanceB, 2) - 2 * distanceA * (Math.pow(obj.x, 2) + Math.pow(obj.y, 2) + Math.pow(obj.z, 2) - Math.pow(radius, 2)));
+                    let distance = (distanceB + distanceD)/distanceA;
+                    let newPos = new Vector3(obj.x + distance * directVec.x, obj.y + distance * directVec.y, obj.z + distance * directVec.z);
+                    let newPosition = new Vector3(newPos.x + modelBoundingBoxCenter.x, newPos.y + modelBoundingBoxCenter.y, newPos.z + modelBoundingBoxCenter.z)
+                    let unit = 0;
+                    if(state?.camera){
+                    let angleBetween = getAngleBetweenVectors(new Three.Vector2(newPosition.x - state?.camera.position.x, newPosition.z - state?.camera.position.z), new Three.Vector2(directVec.x, directVec.z))
+                    let unit = (newPosition.y - state?.camera.position.y) / angleBetween * angle ;
+                    let rotateAxis = new Three.Vector3(newPosition.x - state?.camera.position.x, newPosition.y - state?.camera.position.y, newPosition.z - state?.camera.position.z)}
                     setOrbitControlTarget(objectPosition);
                     setSpriteOpacity(0);
-                    const newPosition = new Three.Vector3(selectedAnnotation.location.x + directVec.x * distance, selectedAnnotation.location.y + directVec.y * distance, selectedAnnotation.location.z + directVec.z * distance);
-                    let angle = 0.04;
                     let opacity = 0;
+                    
+
                     state?.renderer.setAnimationLoop(() => {
                         let x = state.camera.position.x;
-                        let z = state.camera.position.z;
                         let y = state.camera.position.y;
-                        let isUp = y > newPosition.y?1: 2;
-                        if(y > newPosition.y){
-                            opacity += 0.003;
-                            if(opacity > 0.7) opacity = 0.7;
-                            setSpriteOpacity(opacity);
-                            state.camera.position.lerp(newPosition, 0.01);
+                        let z = state.camera.position.z;
+                        if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
+                            state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
+                            state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
+                            if(state.camera.position.y > newPosition.y)
+                            state.camera.position.y += unit;
                         }else{
-                            if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
+                            if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
+                                opacity += 0.003;
+                                if(opacity > 0.7) opacity = 0.7;
+                                setSpriteOpacity(opacity);
+                                state.camera.position.lerp(newPosition, 0.03);
+                                state.camera.lookAt(objectPosition);
+                            }
+                            else{
                                 state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
                                 state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
-                                state.camera.position.y += 0.1 * Math.pow(-1, isUp);
-                            }else{
-                                if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
-                                    state.camera.position.lerp(newPosition, 0.01);
-                                    opacity += 0.003;
-                                    if(opacity > 0.7) opacity = 0.7;
-                                    setSpriteOpacity(opacity);
-                                }
-                                else{
-                                    state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
-                                    state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
-                                    state.camera.position.y += 0.1 * Math.pow(-1, isUp);
-                                }
+
+                                if(state.camera.position.y > newPosition.y)
+                                state.camera.position.y += unit;
                             }
-                        // }
-                        state.camera.lookAt(objectPosition);    
-                    }})
+                        }
+                    })
+                    /**
+                     * Another way to animate the camera inside the sphere, this way is considering for better quality
+                     */
+                    // const sphere = new Three.Mesh(new Three.SphereGeometry(radius, radius * 5 , radius * 5), new Three.MeshLambertMaterial({wireframe: true }));
+                    // state?.scene.add(sphere);
+                    // sphere.position.y += modelBoundingBoxCenter.y;
+                    // state?.camera.position.set(sphere.position.x, sphere.position.y, sphere.position.z + radius);
+                    // // let group = new Three.Group();
+                    // if(state?.camera){
+                    //     let thitaBetween = getAngleBetweenVectors(new Three.Vector2(newPosition.x, newPosition.z), new Three.Vector2(state.camera.position.x, state.camera.position.z))
+                    //     let piBetween = 1/Math.cos(newPosition.z/Math.sqrt(newPosition.x * newPosition.x + newPosition.y * newPosition.y + newPosition.z * newPosition.z)) - 1/Math.cos(state.camera.position.z/Math.sqrt(state.camera.position.x * state.camera.position.x + state.camera.position.y * state.camera.position.y + state.camera.position.z * state.camera.position.z));
+                    //     sphere.add(state?.camera);
+                    //     // group.add(sphere);
+
+                    //     state.renderer.setAnimationLoop(() => {
+                    //         sphere.rotateY(0.02);
+                    //         // gsap.to(sphere, {
+                    //         //     rotateY: 10,
+                    //         //     duration: 6000,
+                    //         //     delay: 1000,
+                    //         // })
+                    //     })
+                    // }
                 }
             }
         },[selectedAnnotation, viewMode]
     )
-
+    /**
+     * useEffect function that is called when user select specific view mode
+     */
     React.useEffect(
         () => {
             setEnableOrbitControl(viewMode);
         },[viewMode]
+    )
+    /**
+     * useEffect function that is called when user delete, search, or hide current annotation
+     */
+    React.useEffect(
+        () => {
+            if(delOrHide){
+                let mesh = state?.model;
+                if(mesh){
+                    let model_color = new Three.Color(MODEL_PRIMITIVE_COLOR);
+                    const RGBModelValues = [model_color.r, model_color.g, model_color.b];
+                    let colorList = new Float32Array(mesh.geometry.attributes.color.array);
+                    for(let i=0; i < mesh.geometry.attributes.position.array.length - 3; i += 3){
+                        colorList.set(RGBModelValues, i);
+                    }
+                    let colorsAttribute = new Three.BufferAttribute(colorList, 3, true);  //why true? and uint8
+                    mesh.geometry.setAttribute("color", colorsAttribute);
+                    mesh.geometry.attributes.color.needsUpdate = true;
+                }
+            }
+            setDelOrHide(false);
+        },[annotations]
     )
     /**
      * useCallback function to get point user clicked over model
@@ -297,7 +374,9 @@ export function Visualizer({
         [disableInteractions, getClickContext, onRightClick]
     );
     
-
+    /**
+     * a set of useCallback functions for second camera scheme :: onPointerDown, onPointerMove, onPointerUp
+     */
     const onPointerDown = React.useCallback(
         (ev: React.PointerEvent) => {
             if(enableOrbitControl === 'custom'){
@@ -361,6 +440,7 @@ export function Visualizer({
             onCreated={handleCanvasCreated}
         >
             <directionalLight color={0xffffff} intensity={1} position={LIGHT_POSITION} />
+                
                 {enableOrbitControl === 'orbit'? 
                 <OrbitControls
                     enabled={!disableInteractions}
@@ -398,6 +478,7 @@ export function Visualizer({
                     group: (a) => <>{renderGroupAnnotation(a, model, handleOpacity, setAnnoId, annoMaterial, annoId)}</>, // not sure if this is a good way to do things
                     point: (a) => renderPointAnnotation(a, model, handleOpacity, setAnnoId, annoMaterial, annoId),
                     path: () => undefined, // Paths are not currently supported, ignore this
+                    heatmap:(a) => renderPointAnnotation(a, model, handleOpacity, setAnnoId, annoMaterial, annoId),
                     unknown: () => undefined,
                 })
             )}
@@ -407,6 +488,7 @@ export function Visualizer({
                     group: (a) => undefined, // not sure if this is a good way to do things
                     point: (a) => renderSprite(a, a.location, spriteOpacity, 'red', 60, annoId),
                     path: () => undefined, // Paths are not currently supported, ignore this
+                    heatmap: (a) =>  renderSprite(a, a.center, 0.2, 'red', 60, annoId),
                     unknown: () => undefined,
                 })
             )}
@@ -417,20 +499,11 @@ export function Visualizer({
 /**
  * rendre area annotation
  */
-function renderAreaAnnotation(annotation: AreaAnnotationExtends, model: Three.Object3D, handleOpacity: Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element | undefined {
-    const mesh = model.children.find((c): c is Three.Mesh => c instanceof Three.Mesh);
-
-    if (mesh === undefined) {
-        return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
-    }
-    const geometry2 = mesh.geometry.toNonIndexed();
-    const count = mesh.geometry.attributes.position.count; 
-       if(!geometry2.attributes.color){	    
-       const buffer =  new Three.BufferAttribute( new Float32Array( count * 3 ), 3 )
-       geometry2.setAttribute( 'color', buffer );        
-       }; 
-    const colorList = new Float32Array(geometry2.attributes.color.array);
-    const geometryPositionsArray = Array.from(geometry2.getAttribute("position").array);
+function renderAreaAnnotation(annotation: AreaAnnotationExtends, model: Three.Mesh, handleOpacity: Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element | undefined {
+    
+    let mesh = model;
+    const colorList = new Float32Array(mesh.geometry.attributes.color.array);
+    const geometryPositionsArray = Array.from(mesh.geometry.getAttribute("position").array);
     const vertex = new Three.Vector3();
     const areaCenter = new Three.Vector3(annotation.center.x, annotation.center.y, annotation.center.z);
     const color = new Three.Color(AREA_ANNOTATION_COLOR);
@@ -445,12 +518,12 @@ function renderAreaAnnotation(annotation: AreaAnnotationExtends, model: Three.Ob
             colorList.set(rgbValues, i);
         }
     }
-
     // note: this will only work for non indexed geometry
-    const colorsAttribute = new Three.BufferAttribute(colorList, 3, true);
+    const colorsAttribute = new Three.BufferAttribute(colorList, 3);
     mesh.geometry.setAttribute("color", colorsAttribute);
     mesh.geometry.attributes.color.needsUpdate = true;
-    return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
+
+    return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);    
 }
 /**
  * render group annotation
@@ -472,7 +545,7 @@ function renderGroupAnnotation(annotation: GroupAnnotationExtends, model: Three.
 
             const center = new Three.Vector3();
             boundingBox.getCenter(center);
-
+            
             return renderPoint(
                 annotation, handleOpacity, setAnnoId, annoMaterial, annoId
             //     {
@@ -489,7 +562,7 @@ function renderGroupAnnotation(annotation: GroupAnnotationExtends, model: Three.
 /**
  * render point annotation
  */
-function renderPointAnnotation(annotation: PointAnnotationExtends, model: Three.Object3D, handleOpacity: Function, setAnnoId: Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element | undefined {
+function renderPointAnnotation(annotation: AnnotationExtends, model: Three.Mesh, handleOpacity: Function, setAnnoId: Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element | undefined {
     return visitAnnotationData<JSX.Element | undefined>(annotation.data, {
         basic: () => renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId),
         heatmap: (heatmap) => {
@@ -497,11 +570,7 @@ function renderPointAnnotation(annotation: PointAnnotationExtends, model: Three.
             // away it was from the center of the annotation, but it's not a great solution since it's hard to "un-color" the vertices
             // when an annotation is deleted and this also probably won't work if the model has textures. I will leave the implementation
             // here for you to see but feel free to delete it and write a new implementation.
-
-            const mesh = model.children.find((c): c is Three.Mesh => c instanceof Three.Mesh);
-            if (mesh === undefined) {
-                return renderPoint(annotation, handleOpacity, setAnnoId, annoMaterial, annoId);
-            }
+            let mesh = model;
             const colorList = new Float32Array(mesh.geometry.attributes.color.array);
             const geometryPositionsArray = Array.from(mesh.geometry.getAttribute("position").array);
             const vertex = new Three.Vector3();
@@ -537,7 +606,7 @@ function renderPointAnnotation(annotation: PointAnnotationExtends, model: Three.
 }
 
 // Just renders a sphere as annotation
-function renderPoint(annotation: AnnotationExtends, handleOpacity: Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId:number): JSX.Element {
+function renderPoint(annotation: AnnotationExtends, handleOpacity: Function, setAnnoId:Function, annoMaterial: Three.MeshLambertMaterial, annoId: number): JSX.Element {
     //function to show or hide this annotation sprite
     const onMouseOverAnnotaion = () => {
         handleOpacity(0.6);
@@ -547,8 +616,8 @@ function renderPoint(annotation: AnnotationExtends, handleOpacity: Function, set
         handleOpacity(0);
         setAnnoId(0);
     }
-
     let key = annotation.id;
+    let key1 = annotation.id + 1;
     return (
         <mesh
             onPointerOver={onMouseOverAnnotaion}

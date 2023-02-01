@@ -14,6 +14,8 @@ const HEATMAP_COLORS = [
     [1.0, createColor("#b40426")],
 ] as const;
 
+export const MODEL_PRIMITIVE_COLOR = '#FFFFFF';
+
 export const AREA_ANNOTATION_COLOR = "#1483fe";
 
 export function getHeatmapColor(intensity: IntensityValue): ColorHelper {

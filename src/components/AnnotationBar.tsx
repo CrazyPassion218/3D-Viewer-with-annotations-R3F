@@ -74,6 +74,12 @@ interface AnnotationControllerProps{
     checkAllChange: (checked: boolean) => void;
 
     /**
+     * Called when annotaion hide or delete -- this is for heatmap and area annotation.
+     * @param value string
+     */
+    setDelOrHide: (value: boolean) => void;
+
+    /**
      * The list of annotations buffers for the given model.
      */
     annotations: AnnotationExtends[];
@@ -93,6 +99,7 @@ export function AnnotationBar({
     updateControlStatus,
     changeSearch,
     checkAllChange,
+    setDelOrHide,
     annotations,
     controlStatus
 }: AnnotationControllerProps) {
@@ -164,7 +171,7 @@ export function AnnotationBar({
      */
     const handleDeleteClick = (ev: React.MouseEvent, annotation: AnnotationExtends) => {
         ev.preventDefault();
-
+        setDelOrHide(true);
         removeAnnotation(annotation);
     }
 
@@ -200,6 +207,7 @@ export function AnnotationBar({
     const onCheckAllChange = (e: CheckboxChangeEvent) => {
         checkAllChange(e.target.checked);
         setCheckAll(e.target.checked);
+        setDelOrHide(true);
     }
 
     /**
@@ -207,6 +215,7 @@ export function AnnotationBar({
      */
     const onCheckAnnotation = (checked: boolean, annotation: AnnotationExtends, index: number) => {
         updateAnnotation(Object.assign({...annotation}, {display: checked}))
+        setDelOrHide(true);
     };
 
     const onChangePage: PaginationProps['onChange'] = (page) => {
@@ -233,6 +242,7 @@ export function AnnotationBar({
                     options={[
                         { value: 'point', label: 'Point' },
                         { value: 'area', label: 'Area' },
+                        { value: 'heatmap', label: 'Heatmap' },
                         { value: 'group', label: 'group', disabled: true },
                     ]}
                 />
