@@ -1,9 +1,9 @@
 import Three from 'three';
 // import { AnnotationData, AnnotationData_Heatmap } from "../@external-lib/types/annotationData";
 import { SimpleFaceWithNormal, SimpleVectorWithNormal } from "../@external-lib/types/vector";
-import { Annotation ,AreaAnnotation, GroupAnnotation, PointAnnotation, PathAnnotation } from "@external-lib";
-
-export type AnnotationExtends = PointAnnotationExtends | PathAnnotationExtends | GroupAnnotationExtends | AreaAnnotationExtends;
+import { AreaAnnotation, GroupAnnotation, PointAnnotation, PathAnnotation } from "@external-lib";
+import { AnnotationData_Heatmap } from "@external-lib/types/annotationData";
+export type AnnotationExtends = PointAnnotationExtends | PathAnnotationExtends | GroupAnnotationExtends | AreaAnnotationExtends | HeatmapAnnotationExtends ;
 
 interface CommonAnnotationTypes {
     id: number,
@@ -38,7 +38,7 @@ interface CommonAnnotationTypes {
 }
 
 export interface PointAnnotationExtends extends PointAnnotation, CommonAnnotationTypes {
-    
+
 }
 
 export interface AreaAnnotationExtends extends AreaAnnotation, CommonAnnotationTypes{
@@ -53,29 +53,42 @@ export interface PathAnnotationExtends extends PathAnnotation, CommonAnnotationT
     
 }
 
-export function isPointAnnotationExtends(annotation: Annotation): annotation is PointAnnotationExtends {
+export interface HeatmapAnnotationExtends extends CommonAnnotationTypes {
+    type: "heatmap",
+    center: SimpleVectorWithNormal;
+    radius: number;
+    data: AnnotationData_Heatmap;
+}
+
+
+export function isPointAnnotationExtends(annotation: AnnotationExtends): annotation is PointAnnotationExtends {
     return annotation.type === "point";
 }
 
-export function isAreaAnnotationExtends(annotation: Annotation): annotation is AreaAnnotationExtends {
+export function isAreaAnnotationExtends(annotation: AnnotationExtends): annotation is AreaAnnotationExtends {
     return annotation.type === "area";
 }
 
-export function isGroupAnnotationExtends(annotation: Annotation): annotation is GroupAnnotationExtends {
+export function isGroupAnnotationExtends(annotation: AnnotationExtends): annotation is GroupAnnotationExtends {
     return annotation.type === "group";
 }
 
-export function isPathAnnotationExtends(annotation: Annotation): annotation is PathAnnotationExtends {
+export function isPathAnnotationExtends(annotation: AnnotationExtends): annotation is PathAnnotationExtends {
     return annotation.type === "path";
 }
 
+export function isHeatmapAnnotationExtends(annotation: AnnotationExtends): annotation is PathAnnotationExtends {
+    return annotation.type === "heatmap";
+}
+
 export function visitAnnotationExtends<T>(
-    annotation: Annotation,
+    annotation: AnnotationExtends,
     visitorMap: {
         area: (annotation: AreaAnnotationExtends) => T;
         group: (annotation: GroupAnnotationExtends) => T;
         path: (annotation: PathAnnotationExtends) => T;
         point: (annotation: PointAnnotationExtends) => T;
+        heatmap:(annotation: HeatmapAnnotationExtends) => T;
         unknown: (obj: unknown) => T;
     }
 ): T {
@@ -93,6 +106,10 @@ export function visitAnnotationExtends<T>(
 
     if (isAreaAnnotationExtends(annotation)) {
         return visitorMap.area(annotation);
+    }
+
+    if (isHeatmapAnnotationExtends(annotation)) {
+        return visitorMap.heatmap(annotation);
     }
 
     return visitorMap.unknown(annotation);

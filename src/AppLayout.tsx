@@ -1,26 +1,31 @@
 import React from "react";
-import { Visualizer, AnnotationBar } from './viewer'
 import * as Three from "three";
+import { MeshLambertMaterial } from "three";
+import { Select } from "antd";
+
 import {
     SimpleVector2,
     SimpleVectorWithNormal,
     SimpleFaceWithNormal,
 } from "@external-lib";
+
 import {
     AnnotationExtends,
     // visitAnnotationExtends,
     AreaAnnotationExtends,
+    HeatmapAnnotationExtends,
+    PathAnnotationExtends,
     // GroupAnnotationExtends,
     PointAnnotationExtends,
 } from 'user-types'
-import { MeshLambertMaterial } from "three";
-import { Select } from "antd";
-import { getValue } from "@testing-library/user-event/dist/utils";
+
+import { Visualizer, AnnotationBar } from './viewer'
+
 interface AppLayoutProps {
     /**
      * The 3D model to display. This is loaded outside of the component, and the prop value never changes.
      */
-    model: Three.Object3D<Three.Event>;
+    model: Three.Mesh;
 }
 
 export function AppLayout({
@@ -50,8 +55,14 @@ export function AppLayout({
      * This means search string input by user in the current time.
      */
     const [search, setSearch] = React.useState('' as string);
-
+    /**
+     * This is for selection of the show mode
+     */
     const [viewMode, setViewMode] = React.useState<string>('orbit');
+    /**
+     * This state is called when annotation is hidden or deleted or searched.
+     */
+    const [delOrHide, setDelOrHide] = React.useState<boolean>(false);
 
     /**
      * useEffect function when call by following controlStatus and annotations's changing.
@@ -150,6 +161,7 @@ export function AppLayout({
      */
     const updateAnnotationType = (value: string) => {
         setAnnotationType(value)
+        setDelOrHide(true);
     }
 
     /**
@@ -195,7 +207,7 @@ export function AppLayout({
      */
     const changeSearch = (value: string) => {
         setSearch(value);
-
+        setDelOrHide(true);
         const viewAnnotation = annotations.filter(a => a.title.indexOf(value) === 0);
         if (viewAnnotation.length === 1 && viewAnnotation[0].display) {
             updateAnnotation(Object.assign({...viewAnnotation[0]}, {select: true}));
@@ -214,6 +226,13 @@ export function AppLayout({
         setAnnotations(_annotations);
     }
 
+    /**
+     * called when show all checkbox is checked.
+     * @param worldPositionAndNormal SimpleVectorWithNormal
+     * @param screenPosition SimpleVector2
+     * @param annoMaterial MeshLambertMaterial
+     * @returns
+     */
     const handleMouseRightClicked = (worldPositionAndNormal : SimpleVectorWithNormal,
         screenPosition: SimpleVector2, annoMaterial: MeshLambertMaterial) => {
         switch (annotationType) {
@@ -243,13 +262,30 @@ export function AppLayout({
                     } as SimpleVectorWithNormal,
                     face: worldPositionAndNormal as unknown as SimpleFaceWithNormal,
                     material: annoMaterial, 
-                    radius: 20,
+                    radius: 0.6,
                     data: {
                         type: 'basic'
                     },
                     display: true,
                     select: false
                 } as AreaAnnotationExtends);
+                break;
+            case 'heatmap':
+                selectAnnotation({
+                    type: "heatmap",
+                    location: {
+                        x: worldPositionAndNormal.x, y: worldPositionAndNormal.y, z: worldPositionAndNormal.z
+                    } as SimpleVectorWithNormal,
+                    face: worldPositionAndNormal as unknown as SimpleFaceWithNormal,
+                    material: annoMaterial, 
+                    data: {
+                        type: 'heatmap',
+                        radius: 0.8,
+                        intensity: 10,
+                    },
+                    display: true,
+                    select: false
+                } as HeatmapAnnotationExtends);
                 break;
             case 'Group':
                 break;
@@ -258,9 +294,16 @@ export function AppLayout({
         }
     }
 
+    /**
+     * called when show all checkbox is checked.
+     * @param ev string
+     * @return
+     */
     const changeViewMode = (ev: string) => {
         setViewMode(ev);
     };
+
+
     return (
         <div style={{'height': '100%'}}>
             <div style={{ width: '200px', marginRight: 10, position: "absolute", top: 30, left: 20, zIndex: 100}}>
@@ -286,6 +329,7 @@ export function AppLayout({
                 selectAnnotationControl = {selectAnnotationControl}
                 checkAllChange = {checkAllChange}
                 changeSearch = {changeSearch}
+                setDelOrHide={setDelOrHide}
             />
             <Visualizer
                 disableInteractions={false}
@@ -299,6 +343,8 @@ export function AppLayout({
                 selectedAnnotation = {selectedAnnotation}
                 currentState = {controlStatus}
                 viewMode={viewMode}
+                setDelOrHide={setDelOrHide}
+                delOrHide={delOrHide}
             />
         </div>
     );
