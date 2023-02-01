@@ -7,6 +7,7 @@ import {
     SimpleVector2,
     SimpleVectorWithNormal,
     SimpleFaceWithNormal,
+    MAXIMUM_INTENSITY,
 } from "@external-lib";
 
 import {
@@ -20,7 +21,7 @@ import {
 } from 'user-types'
 
 import { Visualizer, AnnotationBar } from './viewer'
-
+import { Area_Heatmap_Radius } from './common/constants';
 interface AppLayoutProps {
     /**
      * The 3D model to display. This is loaded outside of the component, and the prop value never changes.
@@ -262,7 +263,7 @@ export function AppLayout({
                     } as SimpleVectorWithNormal,
                     face: worldPositionAndNormal as unknown as SimpleFaceWithNormal,
                     material: annoMaterial, 
-                    radius: 0.6,
+                    radius: Area_Heatmap_Radius,
                     data: {
                         type: 'basic'
                     },
@@ -280,8 +281,8 @@ export function AppLayout({
                     material: annoMaterial, 
                     data: {
                         type: 'heatmap',
-                        radius: 0.8,
-                        intensity: 10,
+                        radius: Area_Heatmap_Radius,
+                        intensity: MAXIMUM_INTENSITY,
                     },
                     display: true,
                     select: false

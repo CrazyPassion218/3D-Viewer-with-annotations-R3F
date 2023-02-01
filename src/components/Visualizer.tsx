@@ -30,6 +30,8 @@ import {
     getWorldPositionAndNormal,
 } from "../utils/visualizerUtils";
 
+import { getCurrentCameraTarget } from "../utils/customUtils";
+
 import {
     INITIAL_CAMERA_SETTINGS,
     LIGHT_POSITION,
@@ -149,19 +151,15 @@ export function Visualizer({
      * state value for definition whether orbit control is used or not. 
      */
     const [enableOrbitControl, setEnableOrbitControl] = React.useState<string>(viewMode);
-    /**
-     * annotation Id and material 
-     */
-    const canvasRef = React.useRef<any>();
+
+    const [cameraTarget, setCameraTarget] = React.useState<Three.Vector3>(new Three.Vector3(0,0,0));
+
+    const groupRef = React.useRef<any>();
     // TODO use `layerDepth` to show the various layers of an object
     // compute the box that contains all the stuff in the model
     let ClientPointerX = 0;
     let ClientPointerY = 0;
     let enableCustomController = false;
-    /**
-     * useRef instance for group component
-     */
-    const groupRef = React.useRef<any>();
     /**
      * useEffect function that is called when user select specific annotation
      */
@@ -260,6 +258,14 @@ export function Visualizer({
     React.useEffect(
         () => {
             setEnableOrbitControl(viewMode);
+            if(viewMode === 'orbit'){
+                setOrbitControlTarget(modelBoundingBoxCenter);
+                state?.camera.lookAt(modelBoundingBoxCenter);
+            }
+            if(state && viewMode === 'custom'){
+                let currentCameraTarget = getCurrentCameraTarget( state?.raycaster, state?.camera, state?.model);
+                setCameraTarget(currentCameraTarget);
+            }
         },[viewMode]
     )
     /**
@@ -301,7 +307,6 @@ export function Visualizer({
             );
 
             const intersections = state.raycaster.intersectObject(model, true);
-
             return {
                 intersections,
                 camera: state.camera,
@@ -363,6 +368,8 @@ export function Visualizer({
 
             const { intersections, camera, renderer } = clickContext;
 
+            intersections[0].point.y = intersections[0].point.y - groupRef.current.position.y;
+
             const worldPositionAndNormal = getWorldPositionAndNormal(intersections[0]);
 
             onRightClick(
@@ -389,22 +396,25 @@ export function Visualizer({
     );
     const onPointerMove  = React.useCallback((ev: React.PointerEvent) => {
         if(enableCustomController){
+            let angles = 0.25, displacement = 0.5;
             if(Math.abs((ClientPointerX-ev.clientX)/(ClientPointerY-ev.clientY)) > 1){
-                if(ClientPointerX > ev.clientX){
-                    groupRef.current.rotateY(-0.1);
-                }
-                else {
-                    groupRef.current.rotateY(0.1);
-                }
+                if(state){
+                    let angle = -angles;
+                    if(ClientPointerX > ev.clientX)angle = +angles;
+                    let x= state.camera.position.x;
+                    let z = state.camera.position.z;
+                    state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
+                    state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
+                    state.camera.lookAt(cameraTarget);
+                } 
             }
             else{
-                let distance = groupRef.current.position.y;
-                if(distance !== undefined){
-                    if(ClientPointerY > ev.clientY)distance += 0.1;
-                    else distance -= 0.1;
-                    groupRef.current.position.set(groupRef.current.position.x, distance, groupRef.current.position.z);
+                if(ClientPointerY > ev.clientY){
+                    groupRef.current.position.y += displacement;
                 }
-
+                else {
+                    groupRef.current.position.y -= displacement;
+                }
             }
             ClientPointerX = ev.clientX;
             ClientPointerY = ev.clientY;
