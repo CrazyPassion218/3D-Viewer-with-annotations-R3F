@@ -226,23 +226,23 @@ export function Visualizer({
                                         // figure out the position where the distance between the camera and specific point on the model is the shortest.
                                         if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
                                             // this is difficult to understand but it is for find out the array where the change of increase or discrease on the size happens.
-                                            if(dataArray.length < 30)sphereRef.current.rotateOnAxis(verticalAxis, -0.0001);
+                                            if(dataArray.length < 60)sphereRef.current.rotateOnAxis(verticalAxis, -0.0001);
                                             else{
                                                 let s = [] as number[];
                                                 let t = [] as number[];
-                                                for(let i = dataArray.length - 1, j = 0; i <= dataArray.length - 30; i--, j ++){
-                                                    s[j] = dataArray[i] / dataArray[i - 15];
+                                                for(let i = dataArray.length - 1, j = 0; i <= dataArray.length - 60; i--, j ++){
+                                                    s[j] = dataArray[i] / dataArray[i - 30];
                                                 }
-                                                for(let i = s.length - 1 ; i <= 0; i--){
-                                                    t[i] = s[s.length - 1];
-                                                }
-                                                if( t === s )sphereRef.current.rotateOnAxis(verticalAxis, -0.0001);
-                                                else{
+                                                // for(let i = s.length - 1 ; i <= 0; i--){
+                                                //     t[i] = s[s.length - 1];
+                                                // }
+                                                // if( t === s )sphereRef.current.rotateOnAxis(verticalAxis, -0.0001);
+                                                // else{
                                                     if(((s[0] > 1) && (s[s.length - 1] > 1)) || ((s[0] < 1) && (s[s.length - 1] < 1)))sphereRef.current.rotateOnAxis(verticalAxis, -0.0001); // this is for sphere's orbiting around vertical axis with two vectors.
                                                     else{
                                                         //code here if you want to use sprite.
                                                     }
-                                                }
+                                                // }
                                             }
                                         }else{
                                             // continue orbiting.
