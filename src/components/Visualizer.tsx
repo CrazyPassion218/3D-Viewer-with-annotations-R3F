@@ -16,13 +16,13 @@ import {
     AnnotationExtends,
     AreaAnnotationExtends,
     GroupAnnotationExtends,
-    PointAnnotationExtends,
+    // PointAnnotationExtends,
     visitAnnotationExtends,
 } from "user-types";
 
 import { AREA_ANNOTATION_COLOR, getHeatmapColor, SCENE_BACKGROUND_COLOR, MODEL_PRIMITIVE_COLOR } from "../common/colors";
 import { findTween, getTween } from "../utils/tweenUtils";
-import {isFrontSide, getAngleBetweenVectors} from '../utils/customUtils'
+import { getAngleBetweenVectors3D, getVerticalVectorWithTwoVectors, isFrontSide } from '../utils/customUtils'
 import {
     convertToThreeJSVector,
     convertWorldCoordsToScreenCoords,
@@ -117,7 +117,7 @@ export function Visualizer({
     disableInteractions = false,
     model,
     annotations,
-    layerDepth,
+    // layerDepth,
     viewMode,
     delOrHide,
     setDelOrHide,
@@ -155,6 +155,7 @@ export function Visualizer({
     const [cameraTarget, setCameraTarget] = React.useState<Three.Vector3>(new Three.Vector3(0,0,0));
 
     const groupRef = React.useRef<any>();
+    const sphereRef = React.useRef<any>();
     // TODO use `layerDepth` to show the various layers of an object
     // compute the box that contains all the stuff in the model
     let ClientPointerX = 0;
@@ -178,76 +179,82 @@ export function Visualizer({
                  * animate the camera and move for focusing currnet annotation when user click annotation bar
                  */
                 if(selectedAnnotation.face){
+                    // normal of user selected point on the model.
                     const directVec = selectedAnnotation.face.normal;
-                    let angle = 0.03;
+                    // radius of fake sphere where camera will move and stay.
                     let radius = modelBoundingBox.max.y - modelBoundingBoxCenter.y + 2;
+                    // position of annotation user selected.
                     let objectPosition = new Vector3(selectedAnnotation.location.x, selectedAnnotation.location.y, selectedAnnotation.location.z);
+                    // vector from fake sphere orientation to annotation point.
                     let obj = new Vector3(selectedAnnotation.location.x - modelBoundingBoxCenter.x, selectedAnnotation.location.y - modelBoundingBoxCenter.y, selectedAnnotation.location.z - modelBoundingBoxCenter.z)
+                    // getting the distance from annotation point on model to sphere point where camera will go and stay
                     let distanceB = - (directVec.x * obj.x + directVec.y * obj.y + directVec.z * obj.z);
                     let distanceA = Math.pow(directVec.x, 2) + Math.pow(directVec.y, 2) + Math.pow(directVec.z, 2);
                     let distanceD = Math.sqrt(Math.pow(distanceB, 2) - 2 * distanceA * (Math.pow(obj.x, 2) + Math.pow(obj.y, 2) + Math.pow(obj.z, 2) - Math.pow(radius, 2)));
                     let distance = (distanceB + distanceD)/distanceA;
+                    // position of "view point" on the side of fake sphere.
                     let newPos = new Vector3(obj.x + distance * directVec.x, obj.y + distance * directVec.y, obj.z + distance * directVec.z);
+                    //position of "view point" on the side of world.
                     let newPosition = new Vector3(newPos.x + modelBoundingBoxCenter.x, newPos.y + modelBoundingBoxCenter.y, newPos.z + modelBoundingBoxCenter.z)
-                    let unit = 0;
-                    if(state?.camera){
-                    let angleBetween = getAngleBetweenVectors(new Three.Vector2(newPosition.x - state?.camera.position.x, newPosition.z - state?.camera.position.z), new Three.Vector2(directVec.x, directVec.z))
-                    let unit = (newPosition.y - state?.camera.position.y) / angleBetween * angle ;
-                    let rotateAxis = new Three.Vector3(newPosition.x - state?.camera.position.x, newPosition.y - state?.camera.position.y, newPosition.z - state?.camera.position.z)}
-                    setOrbitControlTarget(objectPosition);
-                    setSpriteOpacity(0);
-                    let opacity = 0;
-                    
-
-                    state?.renderer.setAnimationLoop(() => {
-                        let x = state.camera.position.x;
-                        let y = state.camera.position.y;
-                        let z = state.camera.position.z;
-                        if(((newPosition.x - x)/directVec.x > (newPosition.z - z)/directVec.z)){
-                            state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
-                            state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
-                            if(state.camera.position.y > newPosition.y)
-                            state.camera.position.y += unit;
-                        }else{
-                            if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
-                                opacity += 0.003;
-                                if(opacity > 0.7) opacity = 0.7;
-                                setSpriteOpacity(opacity);
-                                state.camera.position.lerp(newPosition, 0.03);
-                                state.camera.lookAt(objectPosition);
-                            }
-                            else{
-                                state.camera.position.x = x * Math.cos(angle) + z * Math.sin(angle);
-                                state.camera.position.z = z * Math.cos(angle) - x * Math.sin(angle);
-
-                                if(state.camera.position.y > newPosition.y)
-                                state.camera.position.y += unit;
-                            }
+                    if(state){
+                    // getting the angle between two vectors, first from center of sphere to current camera, second from center of sphere to "view point".
+                        let vector1 = new Three.Vector3(newPos.x - modelBoundingBoxCenter.x, newPos.y - modelBoundingBoxCenter.y, newPos.z - modelBoundingBoxCenter.z);
+                        let vector2 = new Three.Vector3(state?.camera.position.x - modelBoundingBoxCenter.x, state?.camera.position.y - modelBoundingBoxCenter.y, state?.camera.position.z - modelBoundingBoxCenter.z);
+                        let angleBetween = getAngleBetweenVectors3D(vector1, vector2);
+                    //getting the vector of axis that is vertical with upper two vectors, we called it "view axis"
+                        let verticalAxis = getVerticalVectorWithTwoVectors(vector1, vector2);
+                    // update the orbit controls target
+                        setOrbitControlTarget(objectPosition);
+                    // set the opacity of sprite to zero.
+                        setSpriteOpacity(0);
+                        sphereRef.current.add(state.camera);
+                        if(sphereRef.current.children.length === 1){
+                            //in the begining, camera is seting the original position.
+                            state.renderer.setAnimationLoop(() => {
+                                state.camera.position.lerp(new Three.Vector3(sphereRef.current.position.x, sphereRef.current.position.x + modelBoundingBoxCenter.y, sphereRef.current.position.x + radius), 0.01);
+                                state.camera.lookAt(modelBoundingBoxCenter);
+                                // stop layouting the camera if distance is fixed.
+                                if(state.camera.position.distanceTo( new Three.Vector3(sphereRef.current.position.x, sphereRef.current.position.x + modelBoundingBoxCenter.y, sphereRef.current.position.x + radius)) < 0.1){
+                                    // stop camera
+                                    state.renderer.setAnimationLoop(null);
+                                     // starting orbit after camera layouted.
+                                    let dataArray = [] as number[];
+                                    state.renderer.setAnimationLoop(() => {
+                                        if(getCurrentCameraTarget(state.raycaster, state.camera, state.model) !== 'No match'){
+                                            dataArray.push(getCurrentCameraTarget(state.raycaster, state.camera, state.model).distance);
+                                        }
+                                        // figure out the position where the distance between the camera and specific point on the model is the shortest.
+                                        if(isFrontSide(state.raycaster, state.camera, state.model, objectPosition)){
+                                            // this is difficult to understand but it is for find out the array where the change of increase or discrease on the size happens.
+                                            if(dataArray.length < 30)sphereRef.current.rotateOnAxis(verticalAxis, -0.0001);
+                                            else{
+                                                let s = [] as number[];
+                                                let t = [] as number[];
+                                                for(let i = dataArray.length - 1, j = 0; i <= dataArray.length - 30; i--, j ++){
+                                                    s[j] = dataArray[i] / dataArray[i - 15];
+                                                }
+                                                for(let i = s.length - 1 ; i <= 0; i--){
+                                                    t[i] = s[s.length - 1];
+                                                }
+                                                if( t === s )sphereRef.current.rotateOnAxis(verticalAxis, -0.0001);
+                                                else{
+                                                    if(((s[0] > 1) && (s[s.length - 1] > 1)) || ((s[0] < 1) && (s[s.length - 1] < 1)))sphereRef.current.rotateOnAxis(verticalAxis, -0.0001); // this is for sphere's orbiting around vertical axis with two vectors.
+                                                    else{
+                                                        //code here if you want to use sprite.
+                                                    }
+                                                }
+                                            }
+                                        }else{
+                                            // continue orbiting.
+                                            sphereRef.current.rotateOnAxis(verticalAxis, -0.0001);
+                                        }
+                                        // if(Math.abs((state.camera.position.x - objectPosition.x)/directVec.x - (state.camera.position.z - objectPosition.z)/directVec.z) > 1 || Math.abs((state.camera.position.z - objectPosition.z)/directVec.z - (state.camera.position.y - objectPosition.y) / directVec.y) > 1)
+                                    })
+                                }
+                            }) 
                         }
-                    })
-                    /**
-                     * Another way to animate the camera inside the sphere, this way is considering for better quality
-                     */
-                    // const sphere = new Three.Mesh(new Three.SphereGeometry(radius, radius * 5 , radius * 5), new Three.MeshLambertMaterial({wireframe: true }));
-                    // state?.scene.add(sphere);
-                    // sphere.position.y += modelBoundingBoxCenter.y;
-                    // state?.camera.position.set(sphere.position.x, sphere.position.y, sphere.position.z + radius);
-                    // // let group = new Three.Group();
-                    // if(state?.camera){
-                    //     let thitaBetween = getAngleBetweenVectors(new Three.Vector2(newPosition.x, newPosition.z), new Three.Vector2(state.camera.position.x, state.camera.position.z))
-                    //     let piBetween = 1/Math.cos(newPosition.z/Math.sqrt(newPosition.x * newPosition.x + newPosition.y * newPosition.y + newPosition.z * newPosition.z)) - 1/Math.cos(state.camera.position.z/Math.sqrt(state.camera.position.x * state.camera.position.x + state.camera.position.y * state.camera.position.y + state.camera.position.z * state.camera.position.z));
-                    //     sphere.add(state?.camera);
-                    //     // group.add(sphere);
-
-                    //     state.renderer.setAnimationLoop(() => {
-                    //         sphere.rotateY(0.02);
-                    //         // gsap.to(sphere, {
-                    //         //     rotateY: 10,
-                    //         //     duration: 6000,
-                    //         //     delay: 1000,
-                    //         // })
-                    //     })
-                    // }
+                                           
+                    }
                 }
             }
         },[selectedAnnotation, viewMode]
@@ -263,7 +270,7 @@ export function Visualizer({
                 state?.camera.lookAt(modelBoundingBoxCenter);
             }
             if(state && viewMode === 'custom'){
-                let currentCameraTarget = getCurrentCameraTarget( state?.raycaster, state?.camera, state?.model);
+                let currentCameraTarget = getCurrentCameraTarget( state?.raycaster, state?.camera, state?.model).point;
                 setCameraTarget(currentCameraTarget);
             }
         },[viewMode]
@@ -481,6 +488,12 @@ export function Visualizer({
                     target={orbitControlTarget}
                 />}
             <group ref={groupRef}>
+            <mesh 
+                ref={sphereRef}
+                position={new Three.Vector3(0,modelBoundingBoxCenter.y,0)}
+                geometry={new Three.SphereGeometry(modelBoundingBox.max.y - modelBoundingBoxCenter.y + 2, modelBoundingBox.max.y - modelBoundingBoxCenter.y + 2 * 3 , modelBoundingBox.max.y - modelBoundingBoxCenter.y + 2 * 3)}
+                material={new Three.MeshLambertMaterial({wireframe: true, visible: false})}
+            />
             <primitive object={model}/>
             {annotations.map((annotation) =>
                 visitAnnotationExtends(annotation, {

@@ -16,11 +16,16 @@ export function isFrontSide(raycaster : THREE.Raycaster, camera : THREE.Perspect
     );
     let isFront = false;
     const intersections = raycaster.intersectObject(model, true);
-    if((Math.abs(intersections[0].point.x - objectPosition.x )< 0.1)&& (Math.abs(intersections[0].point.y - objectPosition.y ) < 0.1)&&(Math.abs(intersections[0].point.z - objectPosition.z ) < 0.1))return true;
-    return isFront;
+    if(intersections.length !== 0){
+        if((Math.abs(intersections[0].point.x - objectPosition.x )< 0.5)&& (Math.abs(intersections[0].point.y - objectPosition.y ) < 0.5)&&(Math.abs(intersections[0].point.z - objectPosition.z ) < 0.5))return true;
+        return isFront;
+    }
+    else{
+        return false;
+    }
 }
 
-export function getCurrentCameraTarget(raycaster : THREE.Raycaster, camera : THREE.PerspectiveCamera, model: THREE.Object3D):any{
+export function getCurrentCameraTarget(raycaster : Three.Raycaster, camera : Three.PerspectiveCamera, model: Three.Object3D):any{
     raycaster.setFromCamera(
         {
             x: 0,
@@ -28,7 +33,20 @@ export function getCurrentCameraTarget(raycaster : THREE.Raycaster, camera : THR
         },
         camera
     );
-    let isFront = false;
     const intersections = raycaster.intersectObject(model, true);
-    return intersections.length? new Three.Vector3(intersections[0].point.x, intersections[0].point.y, intersections[0].point.z): 'No match';
+    return intersections.length? intersections[0]: 'No match';
+}
+
+export function getAngleBetweenVectors3D(vector1 : Three.Vector3, vector2: Three.Vector3): number{
+    let A = vector1.x * vector2.x + vector1.y * vector2.y + vector1.z * vector2.z;
+    let B = Math.sqrt(vector1.x * vector1.x + vector1.y * vector1.y + vector1.z * vector1.z);
+    let C = Math.sqrt(vector2.x * vector2.x + vector2.y * vector2.y + vector2.z * vector2.z);
+    let angle = Math.acos(A / B / C);
+    return angle;
+}
+
+
+export function getVerticalVectorWithTwoVectors(vector1 : Three.Vector3, vector2: Three.Vector3): Three.Vector3{
+    let verticalVector = new Three.Vector3(vector1.y * vector2.z - vector2.y * vector1.z, vector1.z * vector2.x - vector1.x * vector2.z, vector1.x * vector2.y - vector2.x * vector1.y)
+    return verticalVector;
 }
